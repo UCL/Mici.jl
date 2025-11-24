@@ -5,7 +5,7 @@ using Random
 using Distributions
 using LogDensityProblems
 
-# Step 1 — Model
+# Model
 struct DistributionModel <: AbstractMCMC.AbstractModel
     dist::Distribution
 end
@@ -13,48 +13,68 @@ end
 LogDensityProblems.logdensity(model::DistributionModel, x) = 
     logpdf(model.dist, x)
 
-LogDensityProblems.dimension(model::DistributionModel) = length(mean(model.dist))
+# LogDensityProblems.dimension(model::DistributionModel) = length(mean(model.dist))
+LogDensityProblems.dimension(model::DistributionModel) =
+    isa(mean(model.dist), Number) ? 1 : length(mean(model.dist))
 
 
-# Step 2 - Sampler
-struct RWSampler <: AbstractMCMC.AbstractSampler 
-    position::Vector{Float64}
-    stepsize::Float64
+# Sampler
+struct RWSampler{T} <: AbstractMCMC.AbstractSampler 
+    stepsize::T
 end
 
-# Step 3 - Random Walk Metropolis Step
+# Step
+# Initial state
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::DistributionModel,
-    sampler::RWSampler
+    sampler::RWSampler;
+    kwargs...
+)
+    d = LogDensityProblems.dimension(model)
+
+    init_state = zeros(d)
+
+    return AbstractMCMC.step(rng, model, sampler, init_state)
+end
+
+# Ignore weights
+function AbstractMCMC.step(
+    rng::AbstractRNG,
+    model::DistributionModel,
+    sampler::RWSampler,
+    weight::Float64;
+    kwargs...
     )
 
-    proposal = sampler.position .+ sampler.stepsize .* randn(rng, length(sampler.position))
+    return AbstractMCMC.step(rng, model, sampler; kwargs...)
+end
 
-    logp_current = LogDensityProblems.logdensity(model, sampler.position)
-    logp_proposal = LogDensityProblems.logdensity(model, proposal)
+# Random Walk Metropolis 
+function AbstractMCMC.step(
+    rng::AbstractRNG,
+    model::DistributionModel,
+    sampler::RWSampler,
+    state::S
+    ) where {S}
 
-    log_accept_ratio = logp_proposal - logp_current
-
+    proposed_state = state .+ sampler.stepsize .* randn(rng, length(state))
+    
+    logp_current = LogDensityProblems.logdensity(model, state)
+    logp_proposed = LogDensityProblems.logdensity(model, proposed_state)
+    
+    log_accept_ratio = logp_proposed - logp_current
+    
     if log(rand(rng)) < log_accept_ratio
-        new_position = proposal
+        new_state = proposed_state
     else
-        new_position = sampler.position
+        new_state = state
     end
-
-    return RWSampler(new_position, sampler.stepsize), logp_current
+    
+    return new_state, new_state
 end
 
-function AbstractMCMC.step(rng::AbstractRNG,
-                           model::DistributionModel,
-                           sampler::RWSampler,
-                           _weight::Float64)
-
-    # Multiple dispatch, ignore the weight and call the usual step
-    return AbstractMCMC.step(rng, model, sampler)
-end
-
-# Step 4 - Sampling Interface
+# Sampling Interface
 function AbstractMCMC.sample(
     rng::AbstractRNG,
     model::DistributionModel,
@@ -63,14 +83,17 @@ function AbstractMCMC.sample(
     kwargs...
     )
 
-    d = length(sampler.position)
+    d = LogDensityProblems.dimension(model)
     samples = Matrix{Float64}(undef, n_samples, d)
 
-    current_sampler = sampler 
+    # First iteration
+    state, _ = AbstractMCMC.step(rng, model, sampler)
+    samples[1, :] = state
 
-    for i in 1:n_samples
-        current_sampler, logp = AbstractMCMC.step(rng, model, current_sampler)
-        samples[i, :] = current_sampler.position
+    # Remaining iterations
+    for i in 2:n_samples
+        state, _ = AbstractMCMC.step(rng, model, sampler, state)
+        samples[i, :] = state
     end
 
     return samples

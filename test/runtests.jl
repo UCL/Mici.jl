@@ -1,6 +1,7 @@
 using Test
 using Arianna
 import Arianna.RandomWalk
+# using Arianna.RandomWalk
 using Distributions
 using LogDensityProblems
 using Random
@@ -15,23 +16,37 @@ using LinearAlgebra
     dist = MvNormal([0.0, 0.0], I(2))
     model = RandomWalk.DistributionModel(dist)
 
-    # Initial sampler
-    s0 = RandomWalk.RWSampler([0.0, 0.0], 0.1)
-    @test s0.position isa Vector{Float64}
-    @test length(s0.position) == 2
+    @test LogDensityProblems.dimension(model) == 2
+    @test LogDensityProblems.logdensity(model, [0.0, 0.0]) isa Float64
 
-    # One step
-    s1, logp = AbstractMCMC.step(rng, model, s0)
-    @test s1.position isa Vector{Float64}
-    @test length(s1.position) == 2
-    @test logp isa Float64
 
-    # Multiple samples
-    samples = AbstractMCMC.sample(rng, model, s0, 100)
+
+    # Sampler Tests
+    s = RandomWalk.RWSampler(0.1)
+
+    @test s isa RandomWalk.RWSampler
+    @test s.stepsize == 0.1
+
+    # Step Tests
+    # Initial state
+    state1, _ = AbstractMCMC.step(rng, model, s)
+
+    @test state1 isa Vector{Float64}
+    @test length(state1) == 2
+
+    # State provided
+    state2, _ = AbstractMCMC.step(rng, model, s, state1)
+
+    @test state2 isa Vector{Float64}
+    @test length(state2) == 2
+
+    # Sampling Tests
+    samples = AbstractMCMC.sample(rng, model, s, 100)
+
     @test samples isa Matrix{Float64}
     @test size(samples) == (100, 2)
 
-    # # Plot each dimension separately
+    # Plot each dimension separately
     # x = samples[:,1]
     # y = samples[:,2]
     # t = 1:size(samples,1)
