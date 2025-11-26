@@ -4,7 +4,7 @@ CurrentModule = Arianna
 
 # Arianna
 
-Documentation for [Arianna](https://github.com/raahweng/Arianna.jl).
+Documentation for [Arianna](https://github.com/UCL/Arianna.jl).
 
 ```@index
 ```

@@ -16,7 +16,4 @@ export LeapfrogIntegrator, AbstractIntegrator
 include("sample.jl")
 export sample_chain
 
-include("density.jl")
-export GaussianDensity, logdensity, gradlogdensity
-
 end

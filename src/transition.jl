@@ -1,11 +1,11 @@
 abstract type AbstractTransition end
 
-struct IndependentMomentumTransition <: AbstractTransition
-    h::AbstractSystem
+struct IndependentMomentumTransition{S<:AbstractSystem} <: AbstractTransition
+    h::S
 end
 
-struct CorrelatedMomentumTransition <: AbstractTransition
-    h::AbstractSystem
+struct CorrelatedMomentumTransition{S<:AbstractSystem} <: AbstractTransition
+    h::S
     state::ChainState
     resample_coefficient::Float64
     function CorrelatedMomentumTransition(h, state, resample_coefficient)

@@ -8,11 +8,11 @@ makedocs(;
     authors = "Matt Graham, Ross Ah-Weng, Callum Lau, Anees Hussain, Jordan Simbananiye and contributors",
     sitename = "Arianna.jl",
     format = Documenter.HTML(;
-        canonical = "https://raahweng.github.io/Arianna.jl",
+        canonical = "https://github-pages.ucl.ac.uk/Arianna.jl",
         edit_link = "main",
         assets = String[],
     ),
     pages = ["Home" => "index.md"],
 )
 
-deploydocs(; repo = "github.com/raahweng/Arianna.jl", devbranch = "main")
+deploydocs(; repo = "github.com/UCL/Arianna.jl", devbranch = "main")

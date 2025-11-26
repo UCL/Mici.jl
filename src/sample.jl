@@ -2,21 +2,21 @@
 function hmc_step(
     h::AbstractSystem,
     integrator::AbstractIntegrator,
-    q₁::AbstractMatrix,
+    q₁::AbstractVector,
     rng::AbstractRNG,
 )
     p₁ = sample_p(h, rng)
     state = ChainState(q₁, p₁)
-    proposed_state = ChainState(q₁, p₁)
+    proposed_state = ChainState(copy(q₁), copy(p₁))
 
     integrate!(integrator, proposed_state)
 
-    accept_prob = exp(H(h, state) - H(h, proposed_state))[1]
+    accept_prob = exp(H(h, state) - H(h, proposed_state))
 
     if rand(rng) < accept_prob
-        return proposed_state.q, true
+        return q(proposed_state), true
     else
-        return state.q, false
+        return q(state), false
     end
 end
 
@@ -24,7 +24,7 @@ end
 function sample_chain(
     h::AbstractSystem,
     integrator::AbstractIntegrator,
-    q₁::AbstractMatrix,
+    q₁::AbstractVector,
     N::Int,
     rng::AbstractRNG,
 )

@@ -17,13 +17,13 @@ All abstract systems must have fields:
 """
 abstract type AbstractSystem end
 
-H(h::AbstractSystem, state::ChainState) = H₁(h, state) .+ H₂(h, state)
-H₁(h::AbstractSystem, state::ChainState) = h.neg_log_dens(state.q)
+H(h::AbstractSystem, state::ChainState) = H₁(h, state) + H₂(h, state)
+H₁(h::AbstractSystem, state::ChainState) = h.neg_log_dens(q(state))
 H₂(h::AbstractSystem, state::ChainState) =
     error("H₂(h, state) not implemented for $(typeof(h))")
 
 ∂H∂q(h::AbstractSystem, state::ChainState) = ∂H₁∂q(h, state) .+ ∂H₂∂q(h, state)
-∂H₁∂q(h::AbstractSystem, state::ChainState) = h.grad_neg_log_dens(state.q)
+∂H₁∂q(h::AbstractSystem, state::ChainState) = h.grad_neg_log_dens(q(state))
 ∂H₂∂q(h::AbstractSystem, state::ChainState) =
     error("∂H₂∂q(h, state) not implemented for $(typeof(h))")
 
@@ -55,16 +55,16 @@ Composite type for an (Unconstrained) Euclidean System, with kinetric energy of 
     H₂(q, p) = ½ pᵀ M⁻¹ p
 where M is a constant positive definite matrix.
 """
-struct EuclideanSystem <: AbstractEuclideanSystem
-    neg_log_dens::Function
-    grad_neg_log_dens::Function
-    metric::AbstractPDMat
+struct EuclideanSystem{F1, F2, M<:AbstractPDMat} <: AbstractEuclideanSystem
+    neg_log_dens::F1
+    grad_neg_log_dens::F2
+    metric::M
 end
 
-H₂(h::EuclideanSystem, state::ChainState) = Xt_invA_X(metric(h), state.p)
-∂H₂∂p(h::EuclideanSystem, state::ChainState) = metric(h) \ state.p
+H₂(h::EuclideanSystem, state::ChainState) = 0.5*invquad(metric(h), p(state))
+∂H₂∂p(h::EuclideanSystem, state::ChainState) = metric(h) \ p(state)
 sample_p(h::EuclideanSystem, rng::AbstractRNG) =
-    sqrt(metric(h)) * randn(rng, size(metric(h), 1), 1)
+    sqrt(metric(h)) * randn(rng, size(metric(h), 1))
 
 # todo: implement cache
 ∂H₂∂q(h::EuclideanSystem, state::ChainState) = zeros(size(metric(h), 1))
