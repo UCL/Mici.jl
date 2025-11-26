@@ -5,5 +5,5 @@ struct ChainState{V<:AbstractVector} <: AbstractChainState
     p::V
 end
 
-q(state::ChainState) = state.q
-p(state::ChainState) = state.p
+q(state::AbstractChainState) = state.q
+p(state::AbstractChainState) = state.p
