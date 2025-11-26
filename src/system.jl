@@ -6,8 +6,13 @@ Base abstract type for Hamiltonian systems with energy
 where
     q   --  current position
     p   --  current momentum
-    H₁  --  potential energy
-    H₂  --  kinetric energy
+    H₁  --  energy term depending on state only
+    H₂  --  energy term depending on momentum and state (optionally)
+
+In a standard Euclidean System, H₁ and H₂ correspond to potential energy and
+kinetic energy respectively. However, solving the Hamiltonian dynamics in more
+complex systems may benefit from a more flexible distinction between (state) and
+(momentum, state) energy components.
 
 All abstract systems must have fields:
     neg_log_dens        --  function to calculate negative log density of the
