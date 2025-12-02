@@ -1,6 +1,6 @@
-using Arianna
+using Mici
 using Test
 
-@testset "Arianna.jl" begin
+@testset "Mici.jl" begin
     # Write your tests here.
 end
