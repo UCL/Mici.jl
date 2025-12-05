@@ -1,18 +1,18 @@
-using Arianna
+using Mici
 using Documenter
 
-DocMeta.setdocmeta!(Arianna, :DocTestSetup, :(using Arianna); recursive = true)
+DocMeta.setdocmeta!(Mici, :DocTestSetup, :(using Mici); recursive = true)
 
 makedocs(;
-    modules = [Arianna],
+    modules = [Mici],
     authors = "Matt Graham, Ross Ah-Weng, Callum Lau, Anees Hussain, Jordan Simbananiye and contributors",
-    sitename = "Arianna.jl",
+    sitename = "Mici.jl",
     format = Documenter.HTML(;
-        canonical = "https://github-pages.ucl.ac.uk/Arianna.jl",
+        canonical = "https://github-pages.ucl.ac.uk/Mici.jl",
         edit_link = "main",
         assets = String[],
     ),
     pages = ["Home" => "index.md"],
 )
 
-deploydocs(; repo = "github.com/UCL/Arianna.jl", devbranch = "main")
+deploydocs(; repo = "github.com/UCL/Mici.jl", devbranch = "main")

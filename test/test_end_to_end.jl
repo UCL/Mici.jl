@@ -3,7 +3,7 @@ using PDMats: AbstractPDMat, PDMat, logdet, invquad
 using Random
 using LinearAlgebra
 using Distributions
-using Arianna
+using Mici
 using Plots
 
 struct GaussianDensity{M<:AbstractVector, L<:AbstractPDMat}

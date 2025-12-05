@@ -72,6 +72,6 @@ jobs:
         shell: julia --project=docs --color=yes {0}
         run: |
           using Documenter: DocMeta, doctest
-          using Arianna
-          DocMeta.setdocmeta!(Arianna, :DocTestSetup, :(using Arianna); recursive=true)
-          doctest(Arianna)
+          using Mici
+          DocMeta.setdocmeta!(Mici, :DocTestSetup, :(using Mici); recursive=true)
+          doctest(Mici)

@@ -1,4 +1,4 @@
-module Arianna
+module Mici
 
 using Random
 using PDMats

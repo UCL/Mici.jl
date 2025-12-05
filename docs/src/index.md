@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = Arianna
+CurrentModule = Mici
 ```
 
-# Arianna
+# Mici
 
-Documentation for [Arianna](https://github.com/UCL/Arianna.jl).
+Documentation for [Mici](https://github.com/UCL/Mici.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [Arianna]
+Modules = [Mici]
 ```
