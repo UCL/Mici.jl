@@ -1,40 +1,40 @@
-# Generate samples from target distribution using Hamiltonian Monte Carlo
-function hmc_step(
+function sample(
     h::AbstractSystem,
     integrator::AbstractIntegrator,
-    q₁::AbstractVector,
+    chain_state::AbstractChainState,
     rng::AbstractRNG,
 )
+    q₁ = q(chain_state)
     p₁ = sample_p(h, rng)
-    state = ChainState(q₁, p₁)
-    proposed_state = ChainState(copy(q₁), copy(p₁))
+    current_state = MarkovChainState(q₁, p₁)
+    proposed_state = MarkovChainState(copy(q₁), copy(p₁))
 
     integrate!(integrator, proposed_state)
 
-    accept_prob = exp(H(h, state) - H(h, proposed_state))
+    accept_prob = exp(H(h, current_state) - H(h, proposed_state))
+    accepted = rand(rng) < accept_prob
+    new_state = accepted ? proposed_state : current_state
 
-    if rand(rng) < accept_prob
-        return q(proposed_state), true
-    else
-        return q(state), false
-    end
+    update_state!(chain_state, q(new_state), p(new_state), accepted)
+
+    return q(new_state), chain_state
 end
 
 
-function sample_chain(
-    h::AbstractSystem,
-    integrator::AbstractIntegrator,
-    q₁::AbstractVector,
-    N::Int,
-    rng::AbstractRNG,
-)
-    samples = zeros(eltype(q₁), N, length(q₁))
-    accepts = BitVector(undef, N)
-    q = q₁
-    for n = 1:N
-        q, accepted = hmc_step(h, integrator, q, rng)
-        samples[n, :] = q
-        accepts[n] = accepted
-    end
-    return samples, accepts
-end
+# function sample_chain(
+#     h::AbstractSystem,
+#     integrator::AbstractIntegrator,
+#     q₁::AbstractVector,
+#     N::Int,
+#     rng::AbstractRNG,
+# )
+#     samples = zeros(eltype(q₁), N, length(q₁))
+#     accepts = BitVector(undef, N)
+#     q = q₁
+#     for n = 1:N
+#         q, accepted = hmc_step(h, integrator, q, rng)
+#         samples[n, :] = q
+#         accepts[n] = accepted
+#     end
+#     return samples, accepts
+# end
