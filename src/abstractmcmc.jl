@@ -1,21 +1,17 @@
 using AbstractMCMC
 
-struct MiciModel{H<:AbstractSystem} <: AbstractMCMC.model
-    H::H
-end
-
 struct MiciSampler{I<:AbstractIntegrator, S<:AbstractChainState} <: AbstractMCMC.AbstractSampler
     integrator::I
     state::S
 end
 
-# sample, state = AbstractMCMC.step(rng, model, sampler; kwargs...)
-# sample = exposed to user
-# state = used for tracking information
+function MiciSampler(I::AbstractIntegrator, q::AbstractVector)
+    return MiciSampler(I, ChainState(q))
+end
 
 function AbstractMCMC.step(
     rng::AbstractRNG,
-    model::MiciModel,
+    model::AbstractSystem,
     sampler::MiciSampler;
     kwargs...,
 )
@@ -24,10 +20,10 @@ end
 
 function AbstractMCMC.step(
     rng::AbstractRNG,
-    model::MiciModel,
+    model::AbstractSystem,
     sampler::MiciSampler,
     state::AbstractChainState;
     kwargs...,
 )
-    return sample(model.H, sampler.integrator, state, rng)
+    return sample(model, sampler.integrator, state, rng)
 end

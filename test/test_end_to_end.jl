@@ -1,49 +1,27 @@
-using Test
-using PDMats: AbstractPDMat, PDMat, logdet, invquad
-using Random
-using LinearAlgebra
-using Distributions
-using Mici
-using Plots
+include("dependencies_for_runtests.jl")
 
-struct GaussianDensity{M<:AbstractVector, L<:AbstractPDMat}
-    μ::M
-    Σ::L
-end
-
-logdensity(g::GaussianDensity, x::AbstractVector) = -0.5(size(g.Σ, 1)*log(2π) + logdet(g.Σ) + invquad(g.Σ, x .- g.μ))
-
-gradlogdensity(g::GaussianDensity, x::AbstractVector) = - g.Σ \ (x - g.μ)
+using Mici.Mici: LeapfrogIntegrator, EuclideanSystem, sample_chain
 
 @testset "Euclidean HMC sampler" begin
 
     μ = [0.0 ; 0.0]
-    Σ = PDMat([1.0 0.2; 0.2 0.35])
-    m = GaussianDensity(μ, Σ)
-    neg_log_dens = q -> -logdensity(m, q)
-    grad_neg_log_dens = q -> -gradlogdensity(m, q)
+    Σ = [1.0 0.2; 0.2 0.35]
+    metric = [1.0 0.03; 0.03 0.6]
+    q₀ = [4.0; 4.0]
+    nsamples = 300
 
-    metric = PDMat([1.0 0.03; 0.03 0.6])
+    neg_log_dens, grad_neg_log_dens, metric = setup_gaussian(μ, Σ, metric)
 
-    rng = MersenneTwister(42)
-
-    h = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
-    integrator = LeapfrogIntegrator(h, 0.2, 10)
-
-    # Run sampler
-    x0 = [4.0; 4.0]
-    nsamples = 200
-    samples, accepts = sample_chain(h, integrator, x0, nsamples, rng)
-
-    #-------------------------------------------------------------------------------
-    # Sanity checks
-    #-------------------------------------------------------------------------------
+    model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
+    integrator = LeapfrogIntegrator(model, 0.2, 10)
+    
+    samples, chain_state = sample_chain(model, integrator, q₀, nsamples, Random.default_rng())
 
     @test size(samples) == (nsamples, 2)
 
     @test all(isfinite, samples)
 
-    @test any(accepts) && any(.!accepts)
+    @test any(chain_state.accepts[] > 0) && any(chain_state.accepts[] < nsamples)
 
     @test norm(mean(samples, dims=1)' - μ) < 0.3
 

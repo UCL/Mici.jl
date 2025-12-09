@@ -21,20 +21,20 @@ function sample(
 end
 
 
-# function sample_chain(
-#     h::AbstractSystem,
-#     integrator::AbstractIntegrator,
-#     q₁::AbstractVector,
-#     N::Int,
-#     rng::AbstractRNG,
-# )
-#     samples = zeros(eltype(q₁), N, length(q₁))
-#     accepts = BitVector(undef, N)
-#     q = q₁
-#     for n = 1:N
-#         q, accepted = hmc_step(h, integrator, q, rng)
-#         samples[n, :] = q
-#         accepts[n] = accepted
-#     end
-#     return samples, accepts
-# end
+function sample_chain(
+    h::AbstractSystem,
+    integrator::AbstractIntegrator,
+    q₁::AbstractVector,
+    N::Int,
+    rng::AbstractRNG,
+)
+    samples = zeros(eltype(q₁), N, length(q₁))
+    chain_state = ChainState(q₁)
+
+    q = q₁
+    for n = 1:N
+        q, chain_state = sample(h, integrator, chain_state, rng)
+        samples[n, :] = q
+    end
+    return samples, chain_state
+end

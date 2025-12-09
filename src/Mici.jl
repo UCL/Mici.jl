@@ -16,4 +16,7 @@ export LeapfrogIntegrator, AbstractIntegrator
 include("sample.jl")
 export sample_chain
 
+include("abstractmcmc.jl")
+export MiciModel, MiciSampler, step
+
 end

@@ -9,7 +9,7 @@ end
 
 function step!(
     h::AbstractEuclideanSystem,
-    state::ChainState,
+    state::AbstractChainState,
     ε::Float64,
 )
     p(state) .-= (ε/2) .* ∂H₁∂q(h, state)
@@ -17,7 +17,7 @@ function step!(
     p(state) .-= (ε/2) .* ∂H₁∂q(h, state)
 end
 
-function integrate!(lfi::LeapfrogIntegrator, state::ChainState)
+function integrate!(lfi::LeapfrogIntegrator, state::AbstractChainState)
     for n = 1:lfi.T
         step!(lfi.h, state, lfi.ε)
     end

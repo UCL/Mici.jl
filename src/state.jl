@@ -38,17 +38,22 @@ abstract type NonMarkovChainState <: AbstractChainState end
 
 q(state::NonMarkovChainState) = q(state.current_state)
 p(state::NonMarkovChainState) = p(state.current_state)
+
 struct ChainState{M<:MarkovChainState} <: NonMarkovChainState
     current_state::M
-    accepts::int
+    accepts::Base.RefValue{Int}
 end
 
 function ChainState(M::MarkovChainState) 
-    return ChainState(M, 0)
+    return ChainState(M, Ref(0))
 end
 
-function update_state!(state::ChainState, q::AbstractVector, p::AbstractVector, accepted::bool; kwargs...)
+function ChainState(q::AbstractVector)
+    return ChainState(MarkovChainState(q, zeros(eltype(q), size(q))), Ref(0))
+end
+
+function update_state!(state::ChainState, q::AbstractVector, p::AbstractVector, accepted::Bool; kwargs...)
     update_state!(state.current_state, q, p; kwargs...)
-    state.accepts += accepted
+    state.accepts[] += accepted
 end
 
