@@ -31,5 +31,5 @@ function AbstractMCMC.step(
 
     update_state!(state, new_state, accepted)
 
-    return q(state), state
+    return q(new_state), state
 end

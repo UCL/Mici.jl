@@ -21,5 +21,4 @@ export MetropolisHMCSampler
 include("abstractmcmc.jl")
 export step
 
-
 end
