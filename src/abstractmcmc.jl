@@ -1,14 +1,5 @@
 using AbstractMCMC
 
-struct MiciSampler{I<:AbstractIntegrator, S<:AbstractChainState} <: AbstractMCMC.AbstractSampler
-    integrator::I
-    state::S
-end
-
-function MiciSampler(I::AbstractIntegrator, q::AbstractVector)
-    return MiciSampler(I, ChainState(q))
-end
-
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::AbstractSystem,

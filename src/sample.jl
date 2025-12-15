@@ -1,3 +1,15 @@
+using AbstractMCMC
+
+
+struct MiciSampler{I<:AbstractIntegrator, S<:AbstractChainState} <: AbstractMCMC.AbstractSampler
+    integrator::I
+    state::S
+end
+
+function MiciSampler(I::AbstractIntegrator, q::AbstractVector)
+    return MiciSampler(I, ChainState(q))
+end
+
 function sample(
     h::AbstractSystem,
     integrator::AbstractIntegrator,
