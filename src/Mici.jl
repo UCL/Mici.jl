@@ -5,18 +5,21 @@ using PDMats
 using Distributions
 
 include("state.jl")
-export ChainState
 
 include("system.jl")
 export EuclideanSystem
 
 include("integrator.jl")
-export LeapfrogIntegrator, AbstractIntegrator
+export LeapfrogIntegrator
+
+include("transition.jl")
+export MetropolisTransition
 
 include("sample.jl")
-export sample_chain
+export MetropolisHMCSampler
 
 include("abstractmcmc.jl")
-export MiciModel, MiciSampler, step
+export step
+
 
 end

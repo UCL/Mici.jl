@@ -1,18 +1,17 @@
 include("dependencies_for_runtests.jl")
 
-using Mici.Mici: MiciSampler, LeapfrogIntegrator, EuclideanSystem
+using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator, EuclideanSystem
 
 @testset "Abstract MCMC e2e" begin
 
     μ = [0.0 ; 0.0]
     Σ = [1.0 0.2; 0.2 0.35]
     metric = [1.0 0.03; 0.03 0.6]
-    q₀ = [4.0; 4.0]
     nsamples = 300
 
     neg_log_dens, grad_neg_log_dens, metric = setup_gaussian(μ, Σ, metric)
     model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
-    sampler = MiciSampler(LeapfrogIntegrator(model, 0.2, 10), q₀)
+    sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
 
     samples = sample(Random.default_rng(), model, sampler, nsamples, chain_type=Any, progress=false)
 

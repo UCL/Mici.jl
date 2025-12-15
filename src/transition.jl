@@ -1,17 +1,36 @@
 abstract type AbstractTransition end
 
-struct IndependentMomentumTransition{S<:AbstractSystem} <: AbstractTransition
-    h::S
-end
+struct IndependentMomentumTransition <: AbstractTransition end
 
-struct CorrelatedMomentumTransition{S<:AbstractSystem} <: AbstractTransition
-    h::S
-    state::ChainState
+struct MetropolisTransition <: AbstractTransition end
+
+struct CorrelatedMomentumTransition <: AbstractTransition
     resample_coefficient::Float64
-    function CorrelatedMomentumTransition(h, state, resample_coefficient)
+    function CorrelatedMomentumTransition(resample_coefficient)
         @assert 0.0 ≤ resample_coefficient ≤ 1.0
-        new(h, state, resample_coefficient)
+        new(resample_coefficient)
     end
 end
 
-sample(transition::IndependentMomentumTransition) = sample_p(transition.h)
+
+function transition(::IndependentMomentumTransition, h::EuclideanSystem, rng::AbstractRNG)
+    sample_p(h, rng)
+end
+
+function transition(::MetropolisTransition, integrator::I, h::S, state::C, rng::R) where {
+    I<:AbstractIntegrator,
+    S<:AbstractSystem,
+    C<:AbstractChainState,
+    R<:AbstractRNG
+}
+    current = MarkovChainState(q(state), p(state))
+    proposed = MarkovChainState(copy(q(state)), copy(p(state)))
+
+    integrate!(integrator, h, proposed)
+    ΔH = H(h, current) - H(h, proposed)
+    accepted = log(rand(rng)) < ΔH
+
+    new_state = accepted ? proposed : current
+
+    return new_state, accepted
+end
