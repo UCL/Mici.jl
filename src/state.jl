@@ -55,11 +55,12 @@ function ChainState(q::V) where {V<:AbstractVector}
 end
 
 function update_state!(state::ChainState, p::V) where {V<:AbstractVector}
-    update_state!(state.current_state, p)
+    state.current_state.p .= p
 end
 
 function update_state!(state::ChainState, new_state::MarkovChainState, accepted::Bool)
-    update_state!(state.current_state, q(new_state), p(new_state))
+    state.current_state.q .= new_state.q
+    state.current_state.p .= new_state.p
     state.accepts[] += accepted
 end
 

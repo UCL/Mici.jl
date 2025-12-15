@@ -13,7 +13,7 @@ using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator,
 
     neg_log_dens, grad_neg_log_dens, metric = setup_gaussian(μ, Σ, metric)
     model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
-    sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
+    @time sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
 
     @time samples = sample(rng, model, sampler, nsamples, chain_type=Any, progress=false)
 
