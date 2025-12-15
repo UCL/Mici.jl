@@ -15,7 +15,7 @@ using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator,
     model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
     sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
 
-    samples = sample(rng, model, sampler, nsamples, chain_type=Any, progress=false)
+    @time samples = sample(rng, model, sampler, nsamples, chain_type=Any, progress=false)
 
     @test norm(mean(samples, dims=1)[1] - μ) < 0.3
 
