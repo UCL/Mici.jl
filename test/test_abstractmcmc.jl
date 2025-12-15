@@ -9,11 +9,13 @@ using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator,
     metric = [1.0 0.03; 0.03 0.6]
     nsamples = 300
 
+    rng = Random.MersenneTwister(42)
+
     neg_log_dens, grad_neg_log_dens, metric = setup_gaussian(μ, Σ, metric)
     model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
     sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
 
-    samples = sample(Random.default_rng(), model, sampler, nsamples, chain_type=Any, progress=false)
+    samples = sample(rng, model, sampler, nsamples, chain_type=Any, progress=false)
 
     @test norm(mean(samples, dims=1)[1] - μ) < 0.3
 
