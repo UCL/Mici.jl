@@ -4,7 +4,7 @@ using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator,
 
 @testset "Abstract MCMC e2e" begin
 
-    μ = [0.0 ; 0.0]
+    μ = [1.0 ; 1.0]
     Σ = [1.0 0.2; 0.2 0.35]
     metric = [1.0 0.03; 0.03 0.6]
     nsamples = 300

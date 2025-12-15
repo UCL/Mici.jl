@@ -22,24 +22,3 @@ function sample_init_state(h::H, rng::AbstractRNG) where {H<:AbstractSystem}
     return ChainState(M)
 end
 
-
-# function sample(
-#     sampler::MetropolisHMCSampler,
-#     state::AbstractChainState,
-#     rng::AbstractRNG,
-# )
-#     q₁ = q(state)
-#     p₁ = sample_p(h, rng)
-#     current_state = MarkovChainState(q₁, p₁)
-#     proposed_state = MarkovChainState(copy(q₁), copy(p₁))
-
-#     integrate!(sampler.integrator, proposed_state)
-
-#     accept_prob = exp(H(h, current_state) - H(h, proposed_state))
-#     accepted = rand(rng) < accept_prob
-#     new_state = accepted ? proposed_state : current_state
-
-#     update_state!(chain_state, q(new_state), p(new_state), accepted)
-
-#     return q(new_state), chain_state
-# end
