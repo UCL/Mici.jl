@@ -34,8 +34,8 @@ struct GILeapfrogIntegrator <: AbstractIntegrator
     T::Int
 end
 
-function step!(solstep::SolutionStep, integrator::HODEMethod)
-    integrate_step!(solstep, integrator)
+function step!(solstep::SolutionStep, int::AbstractIntegrator)
+    integrate_step!(current(solstep), history(solstep), parameters(solstep), int)
     return solstep
 end
 
@@ -47,7 +47,7 @@ function integrate!(
 )
     # Initialise GI integrator + solution state
     problem = gi_problem(system, state, gi.T, gi.ε)
-    solstep, integrator = initialise_step(problem, StrangA)
+    solstep, integrator = initialise_step(problem, StrangA())
 
     # Perform T steps
     for _ in 1:gi.T

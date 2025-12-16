@@ -27,7 +27,7 @@ function gi_problem(
     return HODEProblem(v!,f!,hamiltonian, T, ε, q₀, p₀)
 end
 
-function initialise_step(problem::HODEProblem, method::GeometricMethod)
+function initialise_step(problem::GeometricProblem, method::GeometricMethod)
     integrator = GeometricIntegrator(problem, method)
 
     solstep = SolutionStep(
