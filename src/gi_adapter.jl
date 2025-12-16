@@ -1,12 +1,12 @@
 function gi_problem(
-    h::AbstractSystem,
+    h::EuclideanSystem,
     state::AbstractChainState,
     T::Int,
     ε::Float64
 )
 
-    q₀ = q(state)
-    p₀ = p(state)
+    q₀ = copy(q(state))
+    p₀ = copy(p(state))
 
     # This is not ideal
     function v!(dq, t, q, p, params)

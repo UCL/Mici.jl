@@ -3,7 +3,7 @@ module Mici
 using Random
 using PDMats
 using Distributions
-using GeometricIntegrators
+using GeometricIntegrators, GeometricIntegratorsBase
 
 include("state.jl")
 

@@ -1,5 +1,5 @@
 # Integrator methods for solving discretized hamiltonian systems
-abstract type AbstractIntegrator end
+#abstract type AbstractIntegrator end
 
 
 #Original Implementation
@@ -35,7 +35,7 @@ struct GILeapfrogIntegrator <: AbstractIntegrator
 end
 
 function step!(solstep::SolutionStep, int::AbstractIntegrator)
-    integrate_step!(current(solstep), history(solstep), parameters(solstep), int)
+    GeometricIntegratorsBase.integrate!(solstep, int)
     return solstep
 end
 
@@ -52,8 +52,6 @@ function integrate!(
     # Perform T steps
     for _ in 1:gi.T
         step!(solstep, integrator)
-        #do stuff here
-        reset!(solstep, ε)
     end
 
     q_new, p_new = current_qp(solstep)
