@@ -7,7 +7,8 @@ function AbstractMCMC.step(
     kwargs...,
 )
     state = sample_init_state(model, rng)
-    AbstractMCMC.step(rng, model, sampler, state; kwargs...)
+    sampler.state = state
+    AbstractMCMC.step(rng, model, sampler, sampler.state; kwargs...)
 end
 
 function AbstractMCMC.step(
@@ -18,18 +19,15 @@ function AbstractMCMC.step(
     kwargs...,
 )
 
-    p = transition(sampler.momentum_transition, model, rng)
-    update_state!(state, p)
+    transition!(sampler.momentum_transition, model, sampler.state, rng)
 
-    new_state, accepted = transition(
+    transition!(
         sampler.integration_transition,
         sampler.integrator,
         model,
-        state,
+        sampler.state,
         rng,
     )
 
-    update_state!(state, new_state, accepted)
-
-    return q(new_state), state
+    return sampler.state.current_state.q, state
 end

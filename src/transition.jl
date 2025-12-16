@@ -13,17 +13,17 @@ struct CorrelatedMomentumTransition <: AbstractTransition
 end
 
 
-function transition(::IndependentMomentumTransition, h::EuclideanSystem, rng::AbstractRNG)
-    sample_p(h, rng)
+function transition!(::IndependentMomentumTransition, h::EuclideanSystem, state::C, rng::AbstractRNG) where {C<:AbstractChainState}
+    sample_p!(h, state, rng)
 end
 
-function transition(::MetropolisTransition, integrator::I, h::S, state::C, rng::R) where {
+function transition!(::MetropolisTransition, integrator::I, h::S, state::C, rng::R) where {
     I<:AbstractIntegrator,
     S<:AbstractSystem,
     C<:AbstractChainState,
     R<:AbstractRNG
 }
-    current = MarkovChainState(q(state), p(state))
+    current = state.current_state
     proposed = MarkovChainState(copy(q(state)), copy(p(state)))
 
     integrate!(integrator, h, proposed)
@@ -32,5 +32,5 @@ function transition(::MetropolisTransition, integrator::I, h::S, state::C, rng::
 
     new_state = accepted ? proposed : current
 
-    return new_state, accepted
+    update_state!(state, new_state, accepted)
 end
