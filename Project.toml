@@ -6,6 +6,7 @@ authors = ["Matt Graham", "Ross Ah-Weng", "Callum Lau", "Anees Hussain", "Jordan
 [deps]
 AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GeometricIntegrators = "dcce2d33-59f6-5b8d-9047-0defad88ae06"
 JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LogDensityProblems = "6fdf6af0-433a-55f7-b3ed-c6c6e0b8df7c"
@@ -17,6 +18,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 [compat]
 AbstractMCMC = "5.10.0"
 Distributions = "0.25.122"
+GeometricIntegrators = "0.15.4"
 JuliaFormatter = "2.2.0"
 LinearAlgebra = "1.10.0"
 LogDensityProblems = "2.2.0"

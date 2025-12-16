@@ -3,6 +3,7 @@ module Mici
 using Random
 using PDMats
 using Distributions
+using GeometricIntegrators
 
 include("state.jl")
 
@@ -20,5 +21,7 @@ export MetropolisHMCSampler
 
 include("abstractmcmc.jl")
 export step
+
+include("gi_adapter.jl")
 
 end

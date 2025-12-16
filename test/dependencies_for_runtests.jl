@@ -5,6 +5,7 @@ using LinearAlgebra
 using Distributions
 using Plots
 using StatsBase: sample
+using GeometricIntegrators
 
 struct GaussianDensity{M<:AbstractVector, L<:AbstractPDMat}
     μ::M
