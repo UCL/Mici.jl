@@ -45,11 +45,11 @@ end
 
 function update_state!(state::ChainState, accepted::Bool)
     if accepted
-        state.current_state.q .= state.proposed_state.q
-        state.current_state.p .= state.proposed_state.p
+        copyto!(state.current_state.q, state.proposed_state.q)
+        copyto!(state.current_state.p, state.proposed_state.p)
     else
-        state.proposed_state.q .= state.current_state.q
-        state.proposed_state.p .= state.current_state.p
+        copyto!(state.proposed_state.q, state.current_state.q)
+        copyto!(state.proposed_state.p, state.current_state.p)
     end
     state.accepts[] += accepted
 end
