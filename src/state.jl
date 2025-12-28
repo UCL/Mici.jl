@@ -35,21 +35,23 @@ p(state::NonMarkovChainState) = p(state.current_state)
 
 mutable struct ChainState{M<:MarkovChainState} <: NonMarkovChainState
     current_state::M
-    accepts::Integer
+    proposed_state::M
+    accepts::Base.RefValue{Int}
 end
 
 function ChainState(current_state::M) where {M<:MarkovChainState}
-    ChainState(current_state, 0)
+    ChainState(current_state, current_state, Ref(0))
 end
 
-function ChainState(q::V) where {V<:AbstractVector}
-    ChainState(MarkovChainState(q, zeros(eltype(q), size(q))), 0)
-end
-
-function update_state!(state::ChainState, new_state::MarkovChainState, accepted::Bool)
-    state.current_state.q = new_state.q
-    state.current_state.p = new_state.p
-    state.accepts += accepted
+function update_state!(state::ChainState, accepted::Bool)
+    if accepted
+        state.current_state.q .= state.proposed_state.q
+        state.current_state.p .= state.proposed_state.p
+    else
+        state.proposed_state.q .= state.current_state.q
+        state.proposed_state.p .= state.current_state.p
+    end
+    state.accepts[] += accepted
 end
 
 

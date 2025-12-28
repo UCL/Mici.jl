@@ -24,13 +24,11 @@ function transition!(::MetropolisTransition, integrator::I, h::S, state::C, rng:
     R<:AbstractRNG
 }
     current = state.current_state
-    proposed = MarkovChainState(copy(q(state)), copy(p(state)))
+    proposed = state.proposed_state
 
     integrate!(integrator, h, proposed)
     ΔH = H(h, current) - H(h, proposed)
     accepted = log(rand(rng)) < ΔH
 
-    new_state = accepted ? proposed : current
-
-    update_state!(state, new_state, accepted)
+    update_state!(state, accepted)
 end

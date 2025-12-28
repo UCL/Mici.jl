@@ -13,7 +13,7 @@ function AbstractMCMC.step(
     rng::AbstractRNG,
     model::EuclideanSystem,
     sampler::MetropolisHMCSampler,
-    state::AbstractChainState;
+    state::ChainState;
 )
 
     transition!(sampler.momentum_transition, model, state, rng)
@@ -26,5 +26,5 @@ function AbstractMCMC.step(
         rng,
     )
 
-    return state.current_state.q, state
+    return copy(state.current_state.q), state
 end
