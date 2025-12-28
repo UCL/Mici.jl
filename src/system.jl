@@ -70,8 +70,8 @@ end
 
 H₂(h::EuclideanSystem, state::AbstractChainState) = 0.5*invquad(metric(h), p(state))
 ∂H₂∂p(h::EuclideanSystem, state::AbstractChainState) = metric(h) \ p(state)
-function sample_p!(h::EuclideanSystem, state::AbstractChainState, rng::AbstractRNG)
-    state.current_state.p = sqrt(metric(h)) * randn(rng, size(metric(h), 1))
+function sample_p(h::EuclideanSystem, rng::AbstractRNG)
+    sqrt(metric(h)) * randn(rng, size(metric(h), 1))
 end
 
 # todo: implement cache

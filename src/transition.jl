@@ -14,7 +14,7 @@ end
 
 
 function transition!(::IndependentMomentumTransition, h::EuclideanSystem, state::C, rng::AbstractRNG) where {C<:AbstractChainState}
-    sample_p!(h, state, rng)
+    state.current_state.p = sample_p(h, rng)
 end
 
 function transition!(::MetropolisTransition, integrator::I, h::S, state::C, rng::R) where {

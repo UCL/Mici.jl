@@ -20,14 +20,6 @@ end
 q(state::MarkovChainState) = state.q
 p(state::MarkovChainState) = state.p
 
-# function update_state!(state::MarkovChainState{V}, p::V) where {V<:AbstractVector}
-#     state.p .= p
-# end
-
-# function update_state!(state::MarkovChainState{V}, q::V, p::V) where {V<:AbstractVector}
-#     state.q = q
-#     state.p = p
-# end
 
 """
     NonMarkovChainState
@@ -54,12 +46,9 @@ function ChainState(q::V) where {V<:AbstractVector}
     ChainState(MarkovChainState(q, zeros(eltype(q), size(q))), 0)
 end
 
-# function update_state!(state::ChainState, p::V) where {V<:AbstractVector}
-#     state.current_state.p .= p
-# end
-
 function update_state!(state::ChainState, new_state::MarkovChainState, accepted::Bool)
-    state.current_state = new_state
+    state.current_state.q = new_state.q
+    state.current_state.p = new_state.p
     state.accepts += accepted
 end
 

@@ -4,18 +4,17 @@ abstract type AbstractMCMCSampler <: AbstractMCMC.AbstractSampler end
 
 abstract type AbstractHMCSampler <: AbstractMCMCSampler end
 
-mutable struct MetropolisHMCSampler{I<:AbstractIntegrator, TI<:AbstractTransition, TM<:AbstractTransition, C<:AbstractChainState} <: AbstractHMCSampler
+mutable struct MetropolisHMCSampler{I<:AbstractIntegrator, TI<:AbstractTransition, TM<:AbstractTransition} <: AbstractHMCSampler
     integrator::I
     integration_transition::TI
     momentum_transition::TM
-    state::C
 end
 
 function MetropolisHMCSampler(
     integrator,
     integration_transition
 )
-    MetropolisHMCSampler(integrator, integration_transition, IndependentMomentumTransition(), stub_state())
+    MetropolisHMCSampler(integrator, integration_transition, IndependentMomentumTransition())
 end
 
 function sample_init_state(h::H, rng::AbstractRNG) where {H<:AbstractSystem}
