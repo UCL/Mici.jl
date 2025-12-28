@@ -4,7 +4,7 @@ using Random
 using LinearAlgebra
 using Distributions
 using Plots
-using StatsBase: sample
+using AbstractMCMC: sample
 
 struct GaussianDensity{M<:AbstractVector, L<:AbstractPDMat}
     μ::M

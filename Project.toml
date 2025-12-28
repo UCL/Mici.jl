@@ -12,7 +12,7 @@ LogDensityProblems = "6fdf6af0-433a-55f7-b3ed-c6c6e0b8df7c"
 PDMats = "90014a1f-27ba-587c-ab20-58faa44d9150"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
 AbstractMCMC = "5.10.0"
@@ -23,7 +23,7 @@ LogDensityProblems = "2.2.0"
 PDMats = "0.11.36"
 Plots = "1.41.1"
 Random = "1.10.0"
-StatsBase = "0.34.9"
+TimerOutputs = "0.5.29"
 julia = "1.10.0"
 
 [extras]
