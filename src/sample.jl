@@ -4,7 +4,7 @@ abstract type AbstractMCMCSampler <: AbstractMCMC.AbstractSampler end
 
 abstract type AbstractHMCSampler <: AbstractMCMCSampler end
 
-mutable struct MetropolisHMCSampler{I<:AbstractIntegrator, TI<:AbstractTransition, TM<:AbstractTransition} <: AbstractHMCSampler
+struct MetropolisHMCSampler{I<:AbstractIntegrator, TI<:AbstractTransition, TM<:AbstractTransition} <: AbstractHMCSampler
     integrator::I
     integration_transition::TI
     momentum_transition::TM
