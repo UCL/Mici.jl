@@ -1,30 +1,37 @@
 using AbstractMCMC
+using LogDensityProblems
 
 function AbstractMCMC.step(
     rng::AbstractRNG,
-    model::EuclideanSystem,
-    sampler::MetropolisHMCSampler;
+    model::AbstractMCMC.LogDensityModel,
+    sampler::AbstractMiciSampler;
 )
-    state = sample_init_state(model, rng)
+    ℓπ = model.logdensity
+    initialize_sampler!(sampler, LogDensityProblems.dimension(ℓπ))
+    state = sample_initial_state(sampler, ℓπ)
     AbstractMCMC.step(rng, model, sampler, state)
 end
 
 function AbstractMCMC.step(
     rng::AbstractRNG,
-    model::EuclideanSystem,
-    sampler::MetropolisHMCSampler,
+    model::AbstractMCMC.LogDensityModel,
+    sampler::AbstractMiciSampler,
     state::ChainState;
 )
+    ℓπ = model.logdensity
 
-    transition!(sampler.momentum_transition, model, state, rng)
+    system = EuclideanSystem(sampler.metric)
+
+    transition!(sampler.momentum_transition, system, state, rng)
 
     transition!(
         sampler.integration_transition,
         sampler.integrator,
-        model,
+        system,
         state,
         rng,
+        ℓπ,
     )
 
-    return copy(state.current_state.q), state
+    return copy(state.q), state
 end

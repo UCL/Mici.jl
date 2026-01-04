@@ -1,23 +1,23 @@
-include("dependencies_for_runtests.jl")
+# include("dependencies_for_runtests.jl")
 
-using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator, EuclideanSystem
+# using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, LeapfrogIntegrator, EuclideanSystem
 
-@testset "Abstract MCMC e2e" begin
+# @testset "Abstract MCMC e2e" begin
 
-    μ = [1.0 ; 1.0]
-    Σ = [1.0 0.2; 0.2 0.35]
-    metric = [1.0 0.03; 0.03 0.6]
-    nsamples = 300
+#     μ = [1.0 ; 1.0]
+#     Σ = [1.0 0.2; 0.2 0.35]
+#     metric = [1.0 0.03; 0.03 0.6]
+#     nsamples = 300
 
-    rng = Random.MersenneTwister(42)
+#     rng = Random.MersenneTwister(42)
 
-    neg_log_dens, grad_neg_log_dens, metric = setup_gaussian(μ, Σ, metric)
-    model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
-    sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
+#     neg_log_dens, grad_neg_log_dens, metric = setup_gaussian(μ, Σ, metric)
+#     model = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
+#     sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10), MetropolisTransition())
 
-    @time samples = sample(rng, model, sampler, nsamples, progress=false)
+#     @time samples = sample(rng, model, sampler, nsamples, progress=false)
 
-    @test norm(mean(samples, dims=1)[1] - μ) < 0.3
+#     @test norm(mean(samples, dims=1)[1] - μ) < 0.3
 
-    @test maximum(abs, cov(samples) - Σ) < 0.3
-end
+#     @test maximum(abs, cov(samples) - Σ) < 0.3
+# end

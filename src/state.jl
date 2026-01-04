@@ -1,57 +1,70 @@
-abstract type AbstractChainState end
+using LogDensityProblems: logdensity_and_gradient
 
-q(state::AbstractChainState) =
-    error("q(state) not implemented for $(typeof(state))")
+abstract type AbstractPhasePoint end
 
-p(state::AbstractChainState) =
-    error("p(state) not implemented for $(typeof(state))")
-
-
-"""
-    MarkovChainState
-
-Instantaneous state of position and momentum
-"""
-mutable struct MarkovChainState{V<:AbstractVector} <: AbstractChainState
-    q::V
-    p::V
+struct ValueAndGrad{V,G}
+    value::V
+    gradient::G
 end
 
-q(state::MarkovChainState) = state.q
-p(state::MarkovChainState) = state.p
+mutable struct PhasePoint{V<:AbstractVector, T} <: AbstractPhasePoint
+    q::V
+    p::V
+    ℓπ::T
+end
 
+function phasepoint_from_ld(q::V, p::V, ℓπ) where {V<:AbstractVector}
+    val, grad = logdensity_and_gradient(ℓπ, q)
+    lg = ValueAndGrad(val, grad)
+    PhasePoint{V, typeof(lg)}(q, p, lg)
+end
 
-"""
-    NonMarkovChainState
+function refresh_phasepoint!(point::PhasePoint, ℓπ)
+    val, grad = logdensity_and_gradient(ℓπ, point.q)
+    point.ℓπ = ValueAndGrad(val, grad)
+    return point
+end
 
-Base abstract type representing non Markovian chain states. That is,
-chain states containing history of trajectory and related information.
-"""
+ℓπ(point::PhasePoint) = point.ℓπ.value
+∇ℓπ(point::PhasePoint) = point.ℓπ.gradient
 
-abstract type NonMarkovChainState <: AbstractChainState end
+abstract type AbstractChainState end
 
-q(state::NonMarkovChainState) = q(state.current_state)
-p(state::NonMarkovChainState) = p(state.current_state)
-
-mutable struct ChainState{M<:MarkovChainState} <: NonMarkovChainState
-    current_state::M
-    proposed_state::M
+struct ChainState{V<:AbstractVector, T<:ValueAndGrad} <: AbstractChainState
+    current::PhasePoint{V,T}
+    proposal::PhasePoint{V,T}
     accepts::Base.RefValue{Int}
 end
 
-function ChainState(current_state::M) where {M<:MarkovChainState}
-    ChainState(current_state, current_state, Ref(0))
+function chainstate_from_ld(q::V, p::V, ℓπ) where {V<:AbstractVector}
+    current = phasepoint_from_ld(q, p, ℓπ)
+    proposal = phasepoint_from_ld(copy(q), copy(p), ℓπ)
+    ChainState{V, typeof(current.ℓπ)}(current, proposal, Ref(0))
 end
 
-function update_state!(state::ChainState, accepted::Bool)
+function update_state!(state::ChainState, accepted::Bool, ℓπ)
     if accepted
-        copyto!(state.current_state.q, state.proposed_state.q)
-        copyto!(state.current_state.p, state.proposed_state.p)
+        copyto!(state.q, state.q_prop)
+        copyto!(state.p, state.p_prop)
+        refresh_phasepoint!(state.current, ℓπ)
     else
-        copyto!(state.proposed_state.q, state.current_state.q)
-        copyto!(state.proposed_state.p, state.current_state.p)
+        copyto!(state.q_prop, state.q)
+        copyto!(state.p_prop, state.p)
+        refresh_phasepoint!(state.proposal, ℓπ)
     end
     state.accepts[] += accepted
 end
 
-
+function Base.getproperty(s::ChainState, sym::Symbol)
+    if sym === :q
+        return s.current.q
+    elseif sym === :p
+        return s.current.p
+    elseif sym === :q_prop
+        return s.proposal.q
+    elseif sym === :p_prop
+        return s.proposal.p
+    else
+        return getfield(s, sym)
+    end
+end

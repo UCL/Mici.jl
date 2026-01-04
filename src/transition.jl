@@ -13,22 +13,22 @@ struct CorrelatedMomentumTransition <: AbstractTransition
 end
 
 
-function transition!(::IndependentMomentumTransition, h::EuclideanSystem, state::C, rng::AbstractRNG) where {C<:AbstractChainState}
-    state.current_state.p = sample_p(h, rng)
+function transition!(::IndependentMomentumTransition, system::EuclideanSystem, state::ChainState, rng::AbstractRNG)
+    state.p .= sample_p(system, rng)
+    state.p_prop .= state.p
 end
 
-function transition!(::MetropolisTransition, integrator::I, h::S, state::C, rng::R) where {
-    I<:AbstractIntegrator,
-    S<:AbstractSystem,
-    C<:AbstractChainState,
-    R<:AbstractRNG
-}
-    current = state.current_state
-    proposed = state.proposed_state
-
-    integrate!(integrator, h, proposed)
-    ΔH = H(h, current) - H(h, proposed)
+function transition!(
+    ::MetropolisTransition,
+    integrator::AbstractIntegrator,
+    system::AbstractSystem,
+    state::ChainState,
+    rng::AbstractRNG,
+    ℓπ,
+)
+    integrate!(integrator, system, state.proposal, ℓπ)
+    ΔH = H(system, state.current) - H(system, state.proposal)
     accepted = log(rand(rng)) < ΔH
 
-    update_state!(state, accepted)
+    update_state!(state, accepted, ℓπ)
 end
