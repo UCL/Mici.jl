@@ -1,6 +1,14 @@
 using AbstractMCMC
 using LogDensityProblems
 
+# Mici sampler interface for AbstractMCMC.jl
+
+"""
+    AbstractMCMC.step(rng::AbstractRNG, model::AbstractMCMC.LogDensityModel, sampler::AbstractMiciSampler)
+
+Perform a single MCMC step using the provided `sampler` on the `model`, starting from an initial state sampled from the model.
+Returns a tuple containing the new sample and the updated chain state.
+"""
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::AbstractMCMC.LogDensityModel,
@@ -12,6 +20,11 @@ function AbstractMCMC.step(
     AbstractMCMC.step(rng, model, sampler, state)
 end
 
+"""
+    AbstractMCMC.step(rng::AbstractRNG, model::AbstractMCMC.LogDensityModel, sampler::AbstractMiciSampler, state::ChainState)
+
+Perform a single MCMC step using the provided `sampler` on the `model`, starting from the given `state`.
+"""
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::AbstractMCMC.LogDensityModel,
@@ -20,10 +33,13 @@ function AbstractMCMC.step(
 )
     ℓπ = model.logdensity
 
+    # Todo: generalize to generic systems implied by the sampler and model
     system = EuclideanSystem(sampler.metric)
 
+    # Perform a momentum refreshment
     transition!(sampler.momentum_transition, system, state, rng)
 
+    # Perform integration and Metropolis update
     transition!(
         sampler.integration_transition,
         sampler.integrator,
@@ -33,5 +49,5 @@ function AbstractMCMC.step(
         ℓπ,
     )
 
-    return copy(state.q), state
+    return copy(state.qᶜ), state
 end

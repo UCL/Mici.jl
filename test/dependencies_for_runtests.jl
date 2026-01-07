@@ -21,7 +21,6 @@ LogDensityProblems.capabilities(::Type{<:NormalModel}) = LogDensityProblems.LogD
 
 LogDensityProblems.logdensity(p::NormalModel, x::AbstractVector{<:Real}) = -0.5*invquad(p.Σ, x .- p.μ)
 
-# logdensity_and_gradient(ℓ, x) :: (Real, AbstractVector)
 function LogDensityProblems.logdensity_and_gradient(p::NormalModel, x::AbstractVector{<:Real})
 
     δ = x .- p.μ
@@ -32,6 +31,6 @@ function LogDensityProblems.logdensity_and_gradient(p::NormalModel, x::AbstractV
 end
 
 """
-Define example data
+Define example distribution model to sample from
 """
 normal_model = LogDensityModel(NormalModel([1.0 ; 1.0], PDMat([1.0 0.2; 0.2 0.35])))

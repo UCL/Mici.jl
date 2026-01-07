@@ -18,6 +18,7 @@ complex systems may benefit from a more flexible distinction between (position) 
 """
 abstract type AbstractSystem end
 
+
 H(h::AbstractSystem, point::AbstractPhasePoint) = H₁(h, point) + H₂(h, point)
 H₁(h::AbstractSystem, point::AbstractPhasePoint) = -ℓπ(point)
 H₂(h::AbstractSystem, point::AbstractPhasePoint) =
@@ -52,7 +53,7 @@ metric(h::AbstractEuclideanSystem) = h.metric
 """
     EuclideanSystem
 
-Composite type for an (Unconstrained) Euclidean System, with kinetric energy of the form
+Composite type for an (Unconstrained) Euclidean System, with kinetic energy of the form
     H₂(q, p) = ½ pᵀ M⁻¹ p
 where M is a constant positive definite matrix.
 """
