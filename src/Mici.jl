@@ -12,11 +12,13 @@ export EuclideanSystem
 include("integrator.jl")
 export LeapfrogIntegrator
 
+include("initialize.jl")
+
 include("transition.jl")
 export MetropolisTransition
 
 include("sample.jl")
-export MetropolisHMCSampler
+export HMC, instantiate
 
 include("abstractmcmc.jl")
 export step

@@ -34,7 +34,7 @@ end
 
 Refresh the momentum in the given `state` independently from the target distribution.
 """
-function transition!(::IndependentMomentumTransition, system::EuclideanSystem, state::ChainState, rng::AbstractRNG)
+function transition!(state::ChainState, rng::AbstractRNG, ::IndependentMomentumTransition, system::EuclideanSystem)
     state.pᶜ .= sample_p(system, rng)
     state.pᵖ .= state.pᶜ
 end
@@ -50,11 +50,11 @@ end
 Update the state with a Metropolis accept/reject step.
 """
 function transition!(
+    state::ChainState,
+    rng::AbstractRNG,
     ::MetropolisTransition,
     integrator::AbstractIntegrator,
     system::AbstractSystem,
-    state::ChainState,
-    rng::AbstractRNG,
     ℓπ)
 
     integrate!(integrator, system, state.xᵖ, ℓπ)

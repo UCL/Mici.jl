@@ -76,9 +76,11 @@ A chain state during MCMC sampling, consisting of:
     - proposed phase point xᵖ
     - number of accepted proposals
 """
-struct ChainState{V<:AbstractVector, T<:ValueAndGrad} <: AbstractChainState
+struct ChainState{V<:AbstractVector, T<:ValueAndGrad, H<:AbstractSystem, I<:AbstractIntegrator} <: AbstractChainState
     xᶜ::PhasePoint{V,T}             # current phasepoint
     xᵖ::PhasePoint{V,T}             # proposed phasepoint
+    ℋ::H                            # hamiltonian system
+    ℐ::I                            # integrator    
     accepts::Base.RefValue{Int}     # number of accepted proposals
 end
 

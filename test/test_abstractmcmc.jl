@@ -1,6 +1,6 @@
 include("dependencies_for_runtests.jl")
 
-using Mici.Mici: MetropolisHMCSampler, LeapfrogIntegrator
+using Mici.Mici: HMC
 
 @testset "Abstract MCMC e2e" begin
 
@@ -8,7 +8,7 @@ using Mici.Mici: MetropolisHMCSampler, LeapfrogIntegrator
 
     rng = Random.MersenneTwister(42)
 
-    sampler = MetropolisHMCSampler(LeapfrogIntegrator(0.2, 10))
+    sampler = HMC()
 
     @time samples = sample(rng, normal_model, sampler, nsamples, progress=false)
 
