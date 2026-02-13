@@ -1,6 +1,6 @@
 include("dependencies_for_runtests.jl")
 
-using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, GILeapfrogIntegrator, LeapfrogIntegrator, EuclideanSystem, MarkovChainState, gi_problem
+using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, GIIntegrator2, LeapfrogIntegrator, EuclideanSystem, MarkovChainState, gi_problem
 
 @testset "GeneralIntegrators" begin
     μ = [1.0 ; 1.0]
@@ -16,7 +16,7 @@ using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, GILeapfrogIntegrato
     p₀ = [1.0, 0.0]
     state = MarkovChainState(q₀, p₀)
 
-    sampler = MetropolisHMCSampler(GILeapfrogIntegrator(0.2, 10), MetropolisTransition())
+    sampler = MetropolisHMCSampler(GIIntegrator2(SymplecticEulerA(),0.2, 10, model, state), MetropolisTransition())
     samples = sample(rng, model, sampler, nsamples, chain_type=Any, progress=false)
 
     @test norm(mean(samples, dims=1)[1] - μ) < 0.3

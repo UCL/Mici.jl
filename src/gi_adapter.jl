@@ -8,7 +8,6 @@ function gi_problem(
     q₀ = copy(q(state))
     p₀ = copy(p(state))
 
-    # This is not ideal
     function v!(dq, t, q, p, params)
         state_tmp = MarkovChainState(q, p)
         dq .= ∂H₂∂p(h, state_tmp)
@@ -41,4 +40,11 @@ end
 function current_qp(solstep::SolutionStep)
     sol = solution(solstep)
     return sol.q[1], sol.p[1]
+end
+
+function set_initial_condition!(solstep, state)
+    sol = solution(solstep)
+
+    sol.q[1] .= q(state)
+    sol.p[1] .= p(state)
 end

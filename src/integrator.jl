@@ -29,20 +29,20 @@ end
 
 #GeometricIntegrators Implementation
 
-struct GILeapfrogIntegrator <: AbstractIntegrator
+struct GIIntegrator <: AbstractIntegrator
+    method::GeometricMethod
     ε::Float64
     T::Int
 end
 
-
 function integrate!(
-    gi::GILeapfrogIntegrator,
+    gi::GIIntegrator,
     system::AbstractEuclideanSystem,
     state::AbstractChainState,
 )
     # Initialise GI integrator + solution state
     problem = gi_problem(system, state, gi.T, gi.ε)
-    solstep, integrator = initialise_step(problem, SymplecticEulerA())
+    solstep, integrator = initialise_step(problem, gi.method)
 
     # Perform T steps
     for i in 1:gi.T
@@ -50,5 +50,43 @@ function integrate!(
     end
 
     q_new, p_new = current_qp(solstep)
+    update_state!(state, copy(q_new), copy(p_new))
+end
+
+
+#Second attempt - making GIIntegrator mutable so problem and integrator only need to be defined once.
+
+mutable struct GIIntegrator2 <: AbstractIntegrator
+    method::GeometricMethod
+    ε::Float64
+    T::Int
+    problem::EquationProblem
+    solstep::SolutionStep
+    integrator::GeometricIntegrator
+end
+
+function GIIntegrator2(method, ε, T, system, state)
+
+    problem = gi_problem(system, state, T, ε)
+    solstep, integrator = initialise_step(problem, method)
+
+    return GIIntegrator2(method, ε, T, problem, solstep, integrator)
+end
+
+
+function integrate!(
+    gi::GIIntegrator2,
+    system::AbstractEuclideanSystem,
+    state::AbstractChainState,
+)
+    # Initial conditions
+    set_initial_condition!(gi.solstep, state)
+
+    # Perform T steps
+    for i in 1:gi.T
+        GeometricIntegratorsBase.integrate!(gi.solstep, gi.integrator)
+    end
+
+    q_new, p_new = current_qp(gi.solstep)
     update_state!(state, copy(q_new), copy(p_new))
 end
