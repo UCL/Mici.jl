@@ -91,3 +91,26 @@ function integrate!(
     q_new, p_new = current_qp(gi.solstep)
     update_state!(state, copy(q_new), copy(p_new))
 end
+
+
+function integrate!(
+    gi::GIIntegrator2,
+    system::AbstractEuclideanSystem,
+    state::AbstractChainState,
+)
+
+    # Initial conditions - not necessary
+    #set_initial_condition!(gi.solstep, state)
+
+    # Perform T steps
+    for i in 1:gi.T
+        GeometricIntegratorsBase.integrate!(gi.solstep, gi.integrator)
+    end
+
+    q_new, p_new = current_qp(gi.solstep)
+    update_state!(state, copy(q_new), copy(p_new))
+end
+
+#function update_problem(new_momentum, current_pos)
+#    return NewIntegator
+#end

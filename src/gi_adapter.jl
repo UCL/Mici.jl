@@ -39,12 +39,12 @@ end
 
 function current_qp(solstep::SolutionStep)
     sol = GeometricIntegratorsBase.solution(solstep)
-    return Vector(sol.q[1]), Vector(sol.p[1])   #Should be 0?
+    return Vector(sol.q[0]), Vector(sol.p[0])   #Should be 0?
 end
 
 function set_initial_condition!(solstep, state)
     sol = GeometricIntegratorsBase.solution(solstep)
 
-    sol.q[1] .= q(state)
-    sol.p[1] .= p(state)
+    sol.q[0] .= q(state)
+    sol.p[0] .= p(state)
 end

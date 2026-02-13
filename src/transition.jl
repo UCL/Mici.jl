@@ -17,6 +17,9 @@ function transition(::IndependentMomentumTransition, h::EuclideanSystem, rng::Ab
     sample_p(h, rng)
 end
 
+"""
+This function represents a proposal generation along a full HMC trajectory
+"""
 function transition(::MetropolisTransition, integrator::I, h::S, state::C, rng::R) where {
     I<:AbstractIntegrator,
     S<:AbstractSystem,
