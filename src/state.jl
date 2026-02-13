@@ -63,4 +63,10 @@ function update_state!(state::ChainState, new_state::MarkovChainState, accepted:
     state.accepts[] += accepted
 end
 
+function extract_state(s::AbstractChainState, buf)
+    buf[0] = q(s)
+    buf[1] = p(s)
+end
+
+
 

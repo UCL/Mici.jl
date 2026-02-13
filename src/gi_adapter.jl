@@ -38,12 +38,12 @@ function initialise_step(problem::GeometricProblem, method::GeometricMethod)
 end
 
 function current_qp(solstep::SolutionStep)
-    sol = solution(solstep)
-    return sol.q[1], sol.p[1]
+    sol = GeometricIntegratorsBase.solution(solstep)
+    return Vector(sol.q[1]), Vector(sol.p[1])   #Should be 0?
 end
 
 function set_initial_condition!(solstep, state)
-    sol = solution(solstep)
+    sol = GeometricIntegratorsBase.solution(solstep)
 
     sol.q[1] .= q(state)
     sol.p[1] .= p(state)

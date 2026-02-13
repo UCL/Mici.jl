@@ -38,7 +38,7 @@ end
 function integrate!(
     gi::GIIntegrator,
     system::AbstractEuclideanSystem,
-    state::AbstractChainState,
+    state::AbstractChainState
 )
     # Initialise GI integrator + solution state
     problem = gi_problem(system, state, gi.T, gi.ε)
@@ -50,7 +50,8 @@ function integrate!(
     end
 
     q_new, p_new = current_qp(solstep)
-    update_state!(state, copy(q_new), copy(p_new))
+    #new_state = MarkovChainState(q_new, p_new)
+    update_state!(state, q_new, p_new)
 end
 
 
