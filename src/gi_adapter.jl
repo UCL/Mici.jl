@@ -16,7 +16,7 @@ function gi_problem(
 
     function f!(dp, t, q, p, params)
         state_tmp = MarkovChainState(q, p)
-        dp .= -∂H∂q(h, state_tmp)
+        dp .= -∂H₁∂q(h, state_tmp)
     end
 
     function hamiltonian(t, q, p, params)
@@ -38,5 +38,7 @@ function initialise_step(problem::GeometricProblem, method::GeometricMethod)
     return solstep, integrator
 end
 
-current_qp(solstep::SolutionStep) =
-    solution(solstep).q, solution(solstep).p
+function current_qp(solstep::SolutionStep)
+    sol = solution(solstep)
+    return sol.q[1], sol.p[1]
+end

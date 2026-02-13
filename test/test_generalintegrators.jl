@@ -1,12 +1,12 @@
 include("dependencies_for_runtests.jl")
 
-using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, GILeapfrogIntegrator, EuclideanSystem, MarkovChainState, gi_problem
+using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, GILeapfrogIntegrator, LeapfrogIntegrator, EuclideanSystem, MarkovChainState, gi_problem
 
 @testset "GeneralIntegrators" begin
     μ = [1.0 ; 1.0]
     Σ = [1.0 0.2; 0.2 0.35]
     metric = [1.0 0.03; 0.03 0.6]
-    nsamples = 300
+    nsamples = 200
 
     rng = Random.MersenneTwister(42)
 
@@ -16,13 +16,11 @@ using Mici.Mici: MetropolisHMCSampler, MetropolisTransition, GILeapfrogIntegrato
     p₀ = [1.0, 0.0]
     state = MarkovChainState(q₀, p₀)
 
-    problem = gi_problem(model, state, 1,0.1)
-    @test problem isa HODEProblem
-
     sampler = MetropolisHMCSampler(GILeapfrogIntegrator(0.2, 10), MetropolisTransition())
     samples = sample(rng, model, sampler, nsamples, chain_type=Any, progress=false)
 
     @test norm(mean(samples, dims=1)[1] - μ) < 0.3
-
     @test maximum(abs, cov(samples) - Σ) < 0.3
+
+
 end

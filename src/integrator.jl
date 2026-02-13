@@ -34,11 +34,6 @@ struct GILeapfrogIntegrator <: AbstractIntegrator
     T::Int
 end
 
-function step!(solstep::SolutionStep, int::AbstractIntegrator)
-    GeometricIntegratorsBase.integrate!(solstep, int)
-    return solstep
-end
-
 
 function integrate!(
     gi::GILeapfrogIntegrator,
@@ -47,13 +42,13 @@ function integrate!(
 )
     # Initialise GI integrator + solution state
     problem = gi_problem(system, state, gi.T, gi.ε)
-    solstep, integrator = initialise_step(problem, StrangA())
+    solstep, integrator = initialise_step(problem, SymplecticEulerA())
 
     # Perform T steps
-    for _ in 1:gi.T
-        step!(solstep, integrator)
+    for i in 1:gi.T
+        GeometricIntegratorsBase.integrate!(solstep, integrator)
     end
 
     q_new, p_new = current_qp(solstep)
-    return MarkovChainState(copy(q_new), copy(p_new))
+    update_state!(state, copy(q_new), copy(p_new))
 end
