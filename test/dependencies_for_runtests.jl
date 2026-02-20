@@ -1,4 +1,4 @@
-using PDMats: AbstractPDMat, PDMat, logdet, invquad
+using PDMats: AbstractPDMat, invquad
 using Test
 using Random
 using LinearAlgebra
@@ -10,18 +10,21 @@ using LogDensityProblems
 """
 Define a multivariate Normal distribution to sample from
 """
-struct NormalModel{V<:AbstractVector{<:Real}, L<:AbstractPDMat{<:Real}}
-    μ::V
-    Σ::L
+@kwdef struct 𝒩{T, M}
+    μ::Vector{T} = [0.0 ; 0.0]
+    Σ::M = [1.0 0.5; 0.5 1.0]
 end
 
-LogDensityProblems.dimension(p::NormalModel) = length(p.μ)
+LogDensityProblems.dimension(p::𝒩) = length(p.μ)
 
-LogDensityProblems.capabilities(::Type{<:NormalModel}) = LogDensityProblems.LogDensityOrder{1}()
+LogDensityProblems.capabilities(::Type{<:𝒩}) = LogDensityProblems.LogDensityOrder{1}()
 
-LogDensityProblems.logdensity(p::NormalModel, x::AbstractVector{<:Real}) = -0.5*invquad(p.Σ, x .- p.μ)
+function LogDensityProblems.logdensity(p::𝒩{T, M}, x::Vector) where {T, M <:AbstractPDMat}
+    δ = x .- p.μ
+    -0.5*invquad(p.Σ, δ)
+end
 
-function LogDensityProblems.logdensity_and_gradient(p::NormalModel, x::AbstractVector{<:Real})
+function LogDensityProblems.logdensity_and_gradient(p::𝒩{T, M}, x::Vector) where {T, M <:AbstractPDMat}
 
     δ = x .- p.μ
     ℓπ = -0.5*invquad(p.Σ, δ)
@@ -29,8 +32,3 @@ function LogDensityProblems.logdensity_and_gradient(p::NormalModel, x::AbstractV
 
     return ℓπ, ∇ℓπ 
 end
-
-"""
-Define example distribution model to sample from
-"""
-normal_model = LogDensityModel(NormalModel([1.0 ; 1.0], PDMat([1.0 0.2; 0.2 0.35])))

@@ -4,6 +4,8 @@ using Random
 using PDMats
 using Distributions
 
+include("typedefs.jl")
+
 include("state.jl")
 
 include("system.jl")
@@ -11,8 +13,6 @@ export EuclideanSystem
 
 include("integrator.jl")
 export LeapfrogIntegrator
-
-include("initialize.jl")
 
 include("transition.jl")
 export MetropolisTransition

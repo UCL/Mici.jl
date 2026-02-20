@@ -16,39 +16,19 @@ kinetic energy respectively. However, solving the Hamiltonian dynamics in more
 complex systems may benefit from a more flexible distinction between (position) and
 (momentum, position) energy components.
 """
-abstract type AbstractSystem end
+h(z::PhasePoint, system::AbstractSystem) = h₁(z, system) + h₂(z, system)
+h₁(z::PhasePoint, system::AbstractSystem) = -logdens(z, system)
+h₂(z::PhasePoint, system::AbstractSystem) =
+    error("H₂(z, system) not implemented for $(typeof(system))")
 
+∂h∂q(z::PhasePoint, system::AbstractSystem) = ∂h₁∂q(z, system) .+ ∂h₂∂q(z, system)
+∂h₁∂q(z::PhasePoint, system::AbstractSystem) = grad(z, system)
+∂h₂∂q(z::PhasePoint, system::AbstractSystem) =
+    error("∂H₂∂q(z, system) not implemented for $(typeof(system))")
 
-H(h::AbstractSystem, point::AbstractPhasePoint) = H₁(h, point) + H₂(h, point)
-H₁(h::AbstractSystem, point::AbstractPhasePoint) = -ℓπ(point)
-H₂(h::AbstractSystem, point::AbstractPhasePoint) =
-    error("H₂(h, point) not implemented for $(typeof(h))")
-
-∂H∂q(h::AbstractSystem, point::AbstractPhasePoint) = ∂H₁∂q(h, point) .+ ∂H₂∂q(h, point)
-∂H₁∂q(h::AbstractSystem, point::AbstractPhasePoint) = -∇ℓπ(point)
-∂H₂∂q(h::AbstractSystem, point::AbstractPhasePoint) =
-    error("∂H₂∂q(h, point) not implemented for $(typeof(h))")
-
-∂H∂p(h::AbstractSystem, point::AbstractPhasePoint) = ∂H₂∂p(h, point)
-∂H₂∂p(h::AbstractSystem, point::AbstractPhasePoint) =
-    error("∂H₂∂p(h, point) not implemented for $(typeof(h))")
-
-sample_p(h::AbstractSystem, rng::AbstractRNG) =
-    error("sample_p(h, point) not implemented for $(typeof(h))")
-
-
-
-"""
-    AbstractEuclideanSystem
-
-Base abstract type for Euclidean Hamiltonian systems. All Euclidean systems require a 
-constant positive definite matrix corresponding to the metric on the *unconstrained* 
-position space. Positive definiteness is enforced by requiring metric to be of type 
-`AbstractPDMat`.
-"""
-abstract type AbstractEuclideanSystem <: AbstractSystem end
-
-metric(h::AbstractEuclideanSystem) = h.metric
+∂h∂p(z::PhasePoint, system::AbstractSystem) = ∂h₂∂p(z, system)
+∂h₂∂p(z::PhasePoint, system::AbstractSystem) =
+    error("∂H₂∂p(z, system) not implemented for $(typeof(system))")
 
 """
     EuclideanSystem
@@ -57,23 +37,34 @@ Composite type for an (Unconstrained) Euclidean System, with kinetic energy of t
     H₂(q, p) = ½ pᵀ M⁻¹ p
 where M is a constant positive definite matrix.
 """
-struct EuclideanSystem{M<:AbstractPDMat} <: AbstractEuclideanSystem
+abstract type AbstractTractableFlowSystem <: AbstractSystem end
+
+function Φ₁!(z::PhasePoint, system::AbstractTractableFlowSystem, ϵ::Real)
+    z.p .-= ϵ .* ∂h₁∂q(z, system)
+    return nothing
+end
+
+function Φ₂!(z::PhasePoint, system::AbstractTractableFlowSystem, ϵ::Real)
+    z.q .+= ϵ .* ∂h₂∂p(z, system)
+    refresh!(z)
+    return nothing
+end
+struct EuclideanSystem{M, L} <: AbstractTractableFlowSystem
     metric::M
+    ℓ::L
 end
 
-H₂(h::EuclideanSystem, point::AbstractPhasePoint) = 0.5*invquad(metric(h), point.p)
-∂H₂∂p(h::EuclideanSystem, point::AbstractPhasePoint) = metric(h) \ point.p
-function sample_p(h::EuclideanSystem, rng::AbstractRNG)
-    sqrt(metric(h)) * randn(rng, size(metric(h), 1))
+metric(system::EuclideanSystem) = system.metric
+
+function h₂(z::PhasePoint, system::EuclideanSystem{M}) where M <: AbstractPDMat
+     0.5*invquad(metric(system), z.p)
 end
 
-# todo: implement cache
-∂H₂∂q(h::EuclideanSystem, point::AbstractPhasePoint) = zeros(size(metric(h), 1))
+function ∂h₂∂p(z::PhasePoint, system::EuclideanSystem)
+    metric(system) \ z.p
+end
 
-"""
-    AbstractRiemannianSystem
+∂H₂∂q(z::PhasePoint, system::EuclideanSystem) = zeros(size(metric(system), 1))
 
-Base abstract type for Riemannian systems. 
-"""
 abstract type AbstractRiemannianSystem <: AbstractSystem end
 
