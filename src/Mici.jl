@@ -12,6 +12,8 @@ include("state.jl")
 include("system.jl")
 export EuclideanSystem
 
+include("gni.jl")
+
 include("integrator.jl")
 export LeapfrogIntegrator
 
