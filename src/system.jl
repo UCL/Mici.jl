@@ -36,6 +36,9 @@ H₂(h::AbstractSystem, state::ChainState) =
 ∂H₂∂p(h::AbstractSystem, state::ChainState) =
     error("∂H₂∂p(h, state) not implemented for $(typeof(h))")
 
+h1_flow(h::AbstractSystem, state::ChainState, Δt::Real) = p(state) .-= Δt .* ∂H₁∂q(h, state)
+# TODO Too much to put at this level?
+h2_flow(h::AbstractSystem, state::ChainState, Δt::Real) = q(state) .+= Δt .* ∂H₂∂p(h, state)
 sample_p(h::AbstractSystem, rng::AbstractRNG) =
     error("sample_p(h, state) not implemented for $(typeof(h))")
 
@@ -80,4 +83,3 @@ sample_p(h::EuclideanSystem, rng::AbstractRNG) =
 Base abstract type for Riemannian systems. 
 """
 abstract type AbstractRiemannianSystem <: AbstractSystem end
-
