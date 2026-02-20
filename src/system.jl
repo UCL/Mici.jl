@@ -62,4 +62,3 @@ function rand!(rng::AbstractRNG, p::Vector, ::PhasePoint, system::EuclideanSyste
 end
 
 abstract type AbstractRiemannianSystem <: AbstractSystem end
-
