@@ -1,6 +1,6 @@
 module Gni
 using GeometricIntegrators
-using ..Mici: AbstractSystem, ∂H₁∂q, ∂H₂∂p
+using ..Mici: AbstractSystem, ChainState, h1_flow, h2_flow, ∂H₁∂q, ∂H₂∂p
 
 #=
 This is a module offering a thin wrapper to GeometricIntegrators.jl
@@ -35,7 +35,7 @@ function (f::V1Field)(v,t,q,params)
     d = f.d
     p = @view q[d+1:end]
     v[begin:d] .= 0
-    v[d+1:end] = ∂H₂∂p(f.system, p)
+    v[d+1:end] .= ∂H₂∂p(f.system, p)
     return nothing
 end
 
@@ -58,6 +58,37 @@ function field_generator(system, initial_state)
     return (V1Field(system, d), V2Field(system, d))
 end
 
+struct Q1Flow{S}
+    system::S
+    d::Int
+end
+
+function (f::Q1Flow)(q1, t1, q0, t0, params)
+    d = f.d
+    q1 .= q0
+    state = ChainState(@view(q1[begin:d]), @view(q1[d+1:end]))
+    h1_flow(f.system, state, t1 - t0)
+    return nothing
+end
+
+struct Q2Flow{S}
+    system::S
+    d::Int
+end
+
+function (f::Q2Flow)(q1, t1, q0, t0, params)
+    d = f.d
+    q1 .= q0
+    state = ChainState(@view(q1[begin:d]), @view(q1[d+1:end]))
+    h2_flow(f.system, state, t1 - t0)
+    return nothing
+end
+
+function flow_generator(system, initial_state)
+    d = length(initial_state) ÷ 2
+    return (Q1Flow(system, d), Q2Flow(system, d))
+end
+
 function construct_split_ode_problem(system::AbstractSystem, initial_state::AbstractArray, timespan::Tuple, step_size::Real)
     @assert step_size > 0 "step_size must be greater than 0"
 
@@ -66,7 +97,8 @@ function construct_split_ode_problem(system::AbstractSystem, initial_state::Abst
     # terms that we wont group into H1 and H2 right?
     # Order doesn't matter because sum of vector fields is commutative
     vector_fields = field_generator(system, initial_state)
-    problem = SODEProblem(vector_fields, timespan, step_size, initial_state) 
+    subflows = flow_generator(system, initial_state)
+    problem = SODEProblem(vector_fields, subflows, timespan, step_size, initial_state)
     return problem
 end
 
