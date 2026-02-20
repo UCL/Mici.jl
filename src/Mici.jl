@@ -9,18 +9,14 @@ include("typedefs.jl")
 include("state.jl")
 
 include("system.jl")
-export EuclideanSystem
 
 include("integrator.jl")
-export LeapfrogIntegrator
 
 include("transition.jl")
-export MetropolisTransition
 
 include("sample.jl")
-export HMC, instantiate
+export EuclideanHMC
 
 include("abstractmcmc.jl")
-export step
 
 end

@@ -1,13 +1,6 @@
 using AbstractMCMC
 using LogDensityProblems
 
-# Mici sampler interface for AbstractMCMC.jl
-
-"""
-    AbstractMCMC.step(rng, model, sampler::AbstractMiciSampleSpec, state)
-
-Allow initialization of sampler from specification before stepping.
-"""
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::AbstractMCMC.LogDensityModel,
@@ -27,12 +20,6 @@ function AbstractMCMC.step(
     return AbstractMCMC.step(rng, model, sampler, state; kwargs...)
 end
 
-"""
-    AbstractMCMC.step(rng::AbstractRNG, model::AbstractMCMC.LogDensityModel, sampler::AbstractMiciSampler)
-
-Perform a single MCMC step using the provided `sampler` on the `model`, starting from an initial state sampled from the model.
-Returns a tuple containing the new sample and the updated chain state.
-"""
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::AbstractMCMC.LogDensityModel,

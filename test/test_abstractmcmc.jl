@@ -10,9 +10,10 @@ using Mici.Mici: EuclideanHMC
     Random.seed!(rng, 1234)
 
     sampler = EuclideanHMC(1.0)
+    @time samples = sample(rng, ℓ, sampler, 100000; initial_ϵ=0.05)
 
-    samples = AbstractMCMC.sample(rng, model, sampler, 100000; initial_ϵ=0.05)
+    q = samples.traces.q
 
-    @test norm(mean(samples, dims=1)[1] - ℓ.logdensity.μ) < 0.3
-    @test maximum(abs, cov(samples) - ℓ.logdensity.Σ) < 0.3
+    @test norm(mean(q, dims=2) - ℓ.logdensity.μ) < 0.1
+    @test maximum(abs, cov(q') - ℓ.logdensity.Σ) < 0.1
 end

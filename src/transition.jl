@@ -1,15 +1,58 @@
+"""
+    AbstractTransition
+
+Abstract supertype for transitions in MCMC samplers. A transition represents a change in state 
+of the Markov chain in either position or momentum.
+"""
 abstract type AbstractTransition end
+
+"""
+    AbstractIntegrationTransition <: AbstractTransition
+
+Abstract supertype for integration transitions in MCMC samplers. Integration transitions
+update the state according to the Hamiltonian dynamics of the system, typically using a numerical integrator.
+"""
 abstract type AbstractIntegrationTransition <: AbstractTransition end
+
+"""
+    AbstractMetropolisIntegrationTransition{T} <: AbstractIntegrationTransition
+
+Abstract supertype for Metropolis-adjusted integration transitions in MCMC samplers, parameterized by:
+    T -- type of the integration time (e.g., `Float64`)
+"""
 abstract type AbstractMetropolisIntegrationTransition{T} <: AbstractIntegrationTransition end
+
+"""
+    AbstractMomentumTransition <: AbstractTransition
+
+Abstract supertype for momentum transitions in MCMC samplers. 
+Momentum transitions update the momentum component of the state, typically by resampling from a distribution or applying a transformation.
+"""
 abstract type AbstractMomentumTransition <: AbstractTransition end
 
+"""
+    IndependentMomentumTransition <: AbstractMomentumTransition
+
+Struct representing an independent momentum transition, where the momentum is resampled independently from a distribution 
+defined by the system (e.g., a Gaussian distribution with covariance given by the metric of the system).
+"""
 struct IndependentMomentumTransition <: AbstractTransition end
 
+""" 
+    StaticMetropolisIntegrationTransition{T} <: AbstractMetropolisIntegrationTransition{T}
+
+Struct representing a static Metropolis-adjusted integration transition, where the integration time is fixed and specified by the parameter `T`.
+"""
 struct StaticMetropolisIntegrationTransition{T} <:
        AbstractMetropolisIntegrationTransition{T}
     integration_time::T
 end
 
+"""
+    metropolis_integration_transition!(state::MetropolisHMCState, rng::AbstractRNG, integration_time::Real)
+
+Perform a Metropolis-adjusted integration transition
+"""
 function metropolis_integration_transition!(
     state::MetropolisHMCState, rng::AbstractRNG, integration_time::Real
 )

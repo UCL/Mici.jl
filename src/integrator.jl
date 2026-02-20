@@ -1,5 +1,3 @@
-# Integrator methods for solving discretized hamiltonian systems
-
 struct LeapfrogIntegrator <: AbstractIntegrator
     ϵ::Float64
 end

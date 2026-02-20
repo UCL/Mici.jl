@@ -1,58 +1,53 @@
 using AbstractMCMC
 
-"""
-    AbstractSystem
+"""All systems must implement a field `ℓ`, a function for evaluating the log density and gradient of the target distribution."""
+ℓ(system::AbstractSystem) = system.ℓ
 
-Base abstract type for Hamiltonian systems with energy
-    H(q, p) = H₁(q) + H₂(q, p)
-where
-    q   --  current position
-    p   --  current momentum
-    H₁  --  energy term depending on position only
-    H₂  --  energy term depending on momentum and position (optionally)
-
-In a standard Euclidean System, H₁ and H₂ correspond to potential energy and
-kinetic energy respectively. However, solving the Hamiltonian dynamics in more
-complex systems may benefit from a more flexible distinction between (position) and
-(momentum, position) energy components.
-"""
 h(z::PhasePoint, system::AbstractSystem) = h₁(z, system) + h₂(z, system)
 h₁(z::PhasePoint, system::AbstractSystem) = -logdens(z, system)
 h₂(z::PhasePoint, system::AbstractSystem) =
-    error("H₂(z, system) not implemented for $(typeof(system))")
+    error("h₂(z, system) not implemented for $(typeof(system))")
 
 ∂h∂q(z::PhasePoint, system::AbstractSystem) = ∂h₁∂q(z, system) .+ ∂h₂∂q(z, system)
 ∂h₁∂q(z::PhasePoint, system::AbstractSystem) = grad(z, system)
 ∂h₂∂q(z::PhasePoint, system::AbstractSystem) =
-    error("∂H₂∂q(z, system) not implemented for $(typeof(system))")
+    error("∂h₂∂q(z, system) not implemented for $(typeof(system))")
 
 ∂h∂p(z::PhasePoint, system::AbstractSystem) = ∂h₂∂p(z, system)
 ∂h₂∂p(z::PhasePoint, system::AbstractSystem) =
-    error("∂H₂∂p(z, system) not implemented for $(typeof(system))")
+    error("∂h₂∂p(z, system) not implemented for $(typeof(system))")
 
-"""
-    EuclideanSystem
+""" 
+    AbstractTractableFlowSystem <: AbstractSystem
 
-Composite type for an (Unconstrained) Euclidean System, with kinetic energy of the form
-    H₂(q, p) = ½ pᵀ M⁻¹ p
-where M is a constant positive definite matrix.
+Abstract supertype for systems where the Hamiltonian dynamics can be solved in closed form, allowing for exact flow transitions in MCMC samplers.
 """
 abstract type AbstractTractableFlowSystem <: AbstractSystem end
 
+"""Flow transition for h₁"""
 function Φ₁!(z::PhasePoint, system::AbstractTractableFlowSystem, ϵ::Real)
     z.p .-= ϵ .* ∂h₁∂q(z, system)
     return nothing
 end
 
+"""Flow transition for h₂"""
 function Φ₂!(z::PhasePoint, system::AbstractTractableFlowSystem, ϵ::Real)
     z.q .+= ϵ .* ∂h₂∂p(z, system)
     refresh!(z)
     return nothing
 end
+
+"""
+    EuclideanSystem{M, L} <: AbstractTractableFlowSystem
+
+Struct for a Euclidean Hamiltonian system, where the kinetic energy is defined by a metric `M`
+"""
 struct EuclideanSystem{M, L} <: AbstractTractableFlowSystem
     metric::M
     ℓ::L
 end
+
+dimension(system::EuclideanSystem) = LogDensityProblems.dimension(ℓ(system))
 
 metric(system::EuclideanSystem) = system.metric
 
@@ -64,7 +59,10 @@ function ∂h₂∂p(z::PhasePoint, system::EuclideanSystem)
     metric(system) \ z.p
 end
 
-∂H₂∂q(z::PhasePoint, system::EuclideanSystem) = zeros(size(metric(system), 1))
+function rand!(rng::AbstractRNG, p::Vector, ::PhasePoint, system::EuclideanSystem)
+    randn!(rng, p)
+    unwhiten!(system.metric, p)
+end
 
 abstract type AbstractRiemannianSystem <: AbstractSystem end
 

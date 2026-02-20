@@ -1,8 +1,22 @@
 using AbstractMCMC
 using LogDensityProblems
 
+"""
+    AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler
+
+Abstract supertype for Mici samplers, parameterized by the system type `S` and integrator type `I`.
+"""
 abstract type AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler end
 
+"""
+    HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
+
+Struct representing a Hamiltonian Monte Carlo sampler, parameterized by:
+    S  -- type of the system (e.g., `EuclideanSystem`)
+    I  -- type of the integrator (e.g., `LeapfrogIntegrator`)
+    TI -- type of the integration transition (e.g., `StaticMetropolisIntegrationTransition`)
+    TM -- type of the momentum transition (e.g., `IndependentMomentumTransition`)
+"""
 struct HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
     integration_transition::TI
     momentum_transition::TM
