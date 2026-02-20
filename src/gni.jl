@@ -92,10 +92,7 @@ end
 function construct_split_ode_problem(system::AbstractSystem, initial_state::AbstractArray, timespan::Tuple, step_size::Real)
     @assert step_size > 0 "step_size must be greater than 0"
 
-    # This isnt a scaling problem is it?
-    # We dont expect our Hamiltonians to get so many more extra 
-    # terms that we wont group into H1 and H2 right?
-    # Order doesn't matter because sum of vector fields is commutative
+
     vector_fields = field_generator(system, initial_state)
     subflows = flow_generator(system, initial_state)
     problem = SODEProblem(vector_fields, subflows, timespan, step_size, initial_state)
