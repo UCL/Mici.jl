@@ -38,14 +38,22 @@ defined by the system (e.g., a Gaussian distribution with covariance given by th
 """
 struct IndependentMomentumTransition <: AbstractTransition end
 
+struct CorrelatedMomentumTransition{T} <: AbstractMomentumTransition
+    correlation_coefficient::T
+end
+
 """ 
     StaticMetropolisIntegrationTransition{T} <: AbstractMetropolisIntegrationTransition{T}
 
-Struct representing a static Metropolis-adjusted integration transition, where the integration time is fixed and specified by the parameter `T`.
+Struct for a static Metropolis-adjusted integration transition, where the integration time is fixed.
 """
-struct StaticMetropolisIntegrationTransition{T} <:
-       AbstractMetropolisIntegrationTransition{T}
+struct StaticMetropolisIntegrationTransition{T} <: AbstractMetropolisIntegrationTransition{T}
     integration_time::T
+end
+
+struct RandomMetropolisIntegrationTransition{T} <: AbstractMetropolisIntegrationTransition{T}
+    integration_time_lower::T
+    integration_time_upper::T
 end
 
 """
@@ -80,8 +88,30 @@ function transition!(
 end
 
 function transition!(
+    state::MetropolisHMCState,
+    rng::AbstractRNG,
+    transition::RandomMetropolisIntegrationTransition{T},
+) where {T<:Real}
+    integration_time =
+        transition.integration_time_lower +
+        rand(rng) * (transition.integration_time_upper - transition.integration_time_lower)
+    metropolis_integration_transition!(state, rng, integration_time)
+end
+
+function transition!(
     state::AbstractState, rng::AbstractRNG, ::IndependentMomentumTransition
 )
     rand!(rng, state.phase_point.p, state.phase_point, state.system)
     return nothing
 end
+
+function transition!(
+    state::AbstractState, rng::AbstractRNG, transition::CorrelatedMomentumTransition
+)
+    tmp = copy(state.phase_point.p)
+    rand!(rng, tmp, state.phase_point, state.system)
+    state.phase_point.p .*= transition.correlation_coefficient
+    state.phase_point.p .+= tmp * sqrt(1 - transition.correlation_coefficient^2)
+    return nothing
+end
+

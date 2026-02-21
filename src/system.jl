@@ -1,4 +1,4 @@
-using AbstractMCMC
+# Functions and types for defining Hamiltonian systems and their dynamics
 
 """All systems must implement a field `ℓ`, a function for evaluating the log density and gradient of the target distribution."""
 ℓ(system::AbstractSystem) = system.ℓ

@@ -22,18 +22,30 @@ struct HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
     momentum_transition::TM
 end
 
+function HMC{S,I}(integration_time::Real) where {S,I}
+    HMC{S,I}(StaticMetropolisIntegrationTransition(integration_time))
+end
+
 function HMC{S,I}(integration_transition::TI, momentum_transition::TM=IndependentMomentumTransition()) where {S,I,TI,TM}
     HMC{S,I,TI,TM}(integration_transition, momentum_transition)
 end
 
-function HMC{S,I}(integration_time::Real) where {S,I}
-    HMC{S,I}(StaticMetropolisIntegrationTransition(integration_time))
+function HMC{S,I}(integration_time_lower::Real, integration_time_upper::Real) where {S,I}
+    HMC{S,I}(
+        RandomMetropolisIntegrationTransition(
+            integration_time_lower, integration_time_upper
+        ),
+    )
 end
 
 const EuclideanHMC{I,TI,TM} = HMC{EuclideanSystem,I,TI,TM}
 
 function EuclideanHMC(integration_time::Real)
     EuclideanHMC{LeapfrogIntegrator}(StaticMetropolisIntegrationTransition(integration_time))
+end
+
+function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real)
+    EuclideanHMC{LeapfrogIntegrator}(integration_time_lower, integration_time_upper)
 end
 
 function state_type(

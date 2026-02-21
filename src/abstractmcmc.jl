@@ -1,5 +1,4 @@
-using AbstractMCMC
-using LogDensityProblems
+# Methods for AbstractMCMC integration with Mici sampling algorithms
 
 function AbstractMCMC.step(
     rng::AbstractRNG,

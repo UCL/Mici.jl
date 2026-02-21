@@ -1,3 +1,5 @@
+# Capabilities for representing stateful behaviour for sampling
+
 using LogDensityProblems: logdensity_and_gradient
 
 """
