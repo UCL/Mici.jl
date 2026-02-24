@@ -28,7 +28,7 @@ gradlogdensity(g::GaussianDensity, x::AbstractVector) = - g.Σ \ (x - g.μ)
     rng = MersenneTwister(42)
 
     h = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
-    integrator = LeapfrogIntegrator(h, 0.2, 10)
+    integrator = LeapfrogAdapterIntegrator(h, 0.2, 10)
 
     # Run sampler
     x0 = [4.0; 4.0]

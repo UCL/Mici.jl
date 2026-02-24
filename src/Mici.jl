@@ -13,7 +13,7 @@ export EuclideanSystem
 include("gni.jl")
 
 include("integrator.jl")
-export LeapfrogIntegrator, AbstractIntegrator
+export LeapfrogIntegrator, LeapfrogAdapterIntegrator, AbstractIntegrator
 
 include("sample.jl")
 export sample_chain
