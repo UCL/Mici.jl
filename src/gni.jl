@@ -92,7 +92,6 @@ end
 function construct_split_ode_problem(system::AbstractSystem, initial_state::AbstractArray, timespan::Tuple, step_size::Real)
     @assert step_size > 0 "step_size must be greater than 0"
 
-
     vector_fields = field_generator(system, initial_state)
     subflows = flow_generator(system, initial_state)
     problem = SODEProblem(vector_fields, subflows, timespan, step_size, initial_state)
@@ -100,6 +99,8 @@ function construct_split_ode_problem(system::AbstractSystem, initial_state::Abst
 end
 
 
+# TODO This naming is pretty poor, need to get better understanding
+# of the domain and its mapping to our MCMC space
 struct SeparableODE{C<:IntegratorAdapterCore} <: AbstractIntegratorAdapter
     core::C
 
