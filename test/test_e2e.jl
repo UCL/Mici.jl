@@ -8,8 +8,8 @@ using Mici.Mici: EuclideanHMC
     model = LogDensityModel(ℓ)
     rng = TaskLocalRNG()
     Random.seed!(rng, 1234)
-    C1 = 20
-    C2 = 35
+    C1 = 30
+    C2 = 45
 
     sampler = EuclideanHMC(0.3)
 
