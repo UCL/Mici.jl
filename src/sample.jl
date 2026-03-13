@@ -1,40 +1,55 @@
-# Generate samples from target distribution using Hamiltonian Monte Carlo
-function hmc_step(
-    h::AbstractSystem,
-    integrator::AbstractIntegrator,
-    q₁::AbstractVector,
-    rng::AbstractRNG,
-)
-    p₁ = sample_p(h, rng)
-    state = ChainState(q₁, p₁)
-    proposed_state = ChainState(copy(q₁), copy(p₁))
+using AbstractMCMC
+using LogDensityProblems
 
-    integrate!(integrator, proposed_state)
+"""
+    AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler
 
-    accept_prob = exp(H(h, state) - H(h, proposed_state))
+Abstract supertype for Mici samplers, parameterized by the system type `S` and integrator type `I`.
+"""
+abstract type AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler end
 
-    if rand(rng) < accept_prob
-        return q(proposed_state), true
-    else
-        return q(state), false
-    end
+"""
+    HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
+
+Struct representing a Hamiltonian Monte Carlo sampler, parameterized by:
+  - `S`  - type of the system (e.g., `EuclideanSystem`),
+  - `I`  - type of the integrator (e.g., `LeapfrogIntegrator`),
+  - `TI` - type of the integration transition (e.g., `StaticMetropolisIntegrationTransition`),
+  - `TM` - type of the momentum transition (e.g., `IndependentMomentumTransition`).
+"""
+struct HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
+    integration_transition::TI
+    momentum_transition::TM
 end
 
+function HMC{S,I}(integration_time::Real) where {S,I}
+    HMC{S,I}(StaticMetropolisIntegrationTransition(integration_time))
+end
 
-function sample_chain(
-    h::AbstractSystem,
-    integrator::AbstractIntegrator,
-    q₁::AbstractVector,
-    N::Int,
-    rng::AbstractRNG,
-)
-    samples = zeros(eltype(q₁), N, length(q₁))
-    accepts = BitVector(undef, N)
-    q = q₁
-    for n = 1:N
-        q, accepted = hmc_step(h, integrator, q, rng)
-        samples[n, :] = q
-        accepts[n] = accepted
-    end
-    return samples, accepts
+function HMC{S,I}(integration_transition::TI, momentum_transition::TM=IndependentMomentumTransition()) where {S,I,TI,TM}
+    HMC{S,I,TI,TM}(integration_transition, momentum_transition)
+end
+
+function HMC{S,I}(integration_time_lower::Real, integration_time_upper::Real) where {S,I}
+    HMC{S,I}(
+        RandomMetropolisIntegrationTransition(
+            integration_time_lower, integration_time_upper
+        ),
+    )
+end
+
+const EuclideanHMC{I,TI,TM} = HMC{EuclideanSystem,I,TI,TM}
+
+function EuclideanHMC(integration_time::Real)
+    EuclideanHMC{LeapfrogIntegrator}(StaticMetropolisIntegrationTransition(integration_time))
+end
+
+function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real)
+    EuclideanHMC{LeapfrogIntegrator}(integration_time_lower, integration_time_upper)
+end
+
+function state_type(
+    ::HMC{S,I,TI,TM}
+) where {S,I,TI<:AbstractMetropolisIntegrationTransition,TM}
+    MetropolisHMCState
 end

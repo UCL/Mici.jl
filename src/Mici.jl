@@ -4,16 +4,22 @@ using Random
 using PDMats
 using Distributions
 
+include("typedefs.jl")
+
 include("state.jl")
-export ChainState
 
 include("system.jl")
 export EuclideanSystem
 
 include("integrator.jl")
-export LeapfrogIntegrator, AbstractIntegrator
+export LeapfrogIntegrator
+
+include("transition.jl")
+export IndependentMomentumTransition, CorrelatedMomentumTransition, RandomMetropolisIntegrationTransition, StaticMetropolisIntegrationTransition
 
 include("sample.jl")
-export sample_chain
+export HMC, EuclideanHMC
+
+include("abstractmcmc.jl")
 
 end

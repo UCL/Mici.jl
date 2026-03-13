@@ -2,5 +2,5 @@ using Mici
 using Test
 
 @testset "Mici.jl" begin
-    # Write your tests here.
+    include("test_e2e.jl")
 end
