@@ -5,17 +5,14 @@
 
 h(z::PhasePoint, system::AbstractSystem) = h₁(z, system) + h₂(z, system)
 h₁(z::PhasePoint, system::AbstractSystem) = -logdens(z, system)
-h₂(z::PhasePoint, system::AbstractSystem) =
-    error("h₂(z, system) not implemented for $(typeof(system))")
+function h₂(z::PhasePoint, system::AbstractSystem) end
 
 ∂h∂q(z::PhasePoint, system::AbstractSystem) = ∂h₁∂q(z, system) .+ ∂h₂∂q(z, system)
 ∂h₁∂q(z::PhasePoint, system::AbstractSystem) = grad(z, system)
-∂h₂∂q(z::PhasePoint, system::AbstractSystem) =
-    error("∂h₂∂q(z, system) not implemented for $(typeof(system))")
+function ∂h₂∂q(z::PhasePoint, system::AbstractSystem) end
 
 ∂h∂p(z::PhasePoint, system::AbstractSystem) = ∂h₂∂p(z, system)
-∂h₂∂p(z::PhasePoint, system::AbstractSystem) =
-    error("∂h₂∂p(z, system) not implemented for $(typeof(system))")
+function ∂h₂∂p(z::PhasePoint, system::AbstractSystem) end
 
 """ 
     AbstractTractableFlowSystem <: AbstractSystem

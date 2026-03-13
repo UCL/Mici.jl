@@ -1,5 +1,4 @@
 using AbstractMCMC: sample, LogDensityModel
-using CairoMakie
 using Distributions
 using LinearAlgebra
 using LogDensityProblems

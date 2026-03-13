@@ -26,7 +26,7 @@ LogDensityProblems.dimension(::LoopProblem) = 2
 
 LogDensityProblems.capabilities(::Type{<:𝒩}) = LogDensityProblems.LogDensityOrder{1}()
 
-function LogDensityProblems.logdensity(p::𝒩{T, M}, θ) where {T, M<:AbstractPDMat}
+function LogDensityProblems.logdensity(p::𝒩, θ)
     δ = θ .- p.μ
     -0.5*invquad(p.Σ, δ)
 end
@@ -37,7 +37,7 @@ function LogDensityProblems.logdensity(ℓ::LoopProblem, θ)
     -sum(θ.^2) / 2 - ((y - f) / σ)^2 / 2
 end
 
-function LogDensityProblems.logdensity_and_gradient(p::𝒩{T, M}, θ) where {T, M<:AbstractPDMat}
+function LogDensityProblems.logdensity_and_gradient(p::𝒩, θ)
     δ = θ .- p.μ
     ℓπ = -0.5*invquad(p.Σ, δ)
     ∇ℓπ = - p.Σ \ δ
