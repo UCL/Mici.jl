@@ -1,5 +1,5 @@
-struct LeapfrogIntegrator <: AbstractIntegrator
-    ϵ::Float64
+struct LeapfrogIntegrator{T} <: AbstractIntegrator
+    ϵ::T
 end
 
 function step!(z::PhasePoint, integrator::LeapfrogIntegrator, system::AbstractTractableFlowSystem)
