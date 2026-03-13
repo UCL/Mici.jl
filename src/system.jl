@@ -5,14 +5,14 @@
 
 h(z::PhasePoint, system::AbstractSystem) = h₁(z, system) + h₂(z, system)
 h₁(z::PhasePoint, system::AbstractSystem) = -logdens(z, system)
-function h₂(z::PhasePoint, system::AbstractSystem) end
+function h₂ end
 
 ∂h∂q(z::PhasePoint, system::AbstractSystem) = ∂h₁∂q(z, system) .+ ∂h₂∂q(z, system)
 ∂h₁∂q(z::PhasePoint, system::AbstractSystem) = grad(z, system)
-function ∂h₂∂q(z::PhasePoint, system::AbstractSystem) end
+function ∂h₂∂q end
 
 ∂h∂p(z::PhasePoint, system::AbstractSystem) = ∂h₂∂p(z, system)
-function ∂h₂∂p(z::PhasePoint, system::AbstractSystem) end
+function ∂h₂∂p end
 
 """ 
     AbstractTractableFlowSystem <: AbstractSystem
