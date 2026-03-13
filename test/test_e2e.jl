@@ -9,7 +9,7 @@ using Mici.Mici: EuclideanHMC
     rng = TaskLocalRNG()
     Random.seed!(rng, 1234)
     C1 = 30
-    C2 = 45
+    C2 = 50
 
     sampler = EuclideanHMC(0.3)
 
