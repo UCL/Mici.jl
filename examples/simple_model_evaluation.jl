@@ -8,7 +8,7 @@ using LinearAlgebra
 using LogDensityProblems
 using LogDensityProblemsAD
 using PDMats: AbstractPDMat, PDMat, invquad
-using Random
+using StableRNGs
 
 
 @kwdef struct 𝒩{T, M}
@@ -44,8 +44,7 @@ function LogDensityProblems.logdensity_and_gradient(p::𝒩{T, M}, θ) where {T,
     return ℓπ, ∇ℓπ 
 end
 
-rng = TaskLocalRNG()
-Random.seed!(rng, 1234)
+rng = StableRNG(1234)
 
 # sample from models
 ℓ_normal = 𝒩()
@@ -54,7 +53,7 @@ sampler = EuclideanHMC(0.3)
 normal_samples = sample(rng, model, sampler, 100000; initial_ϵ=0.05)
 
 # NOTE: sampling seems to fail if random seed not reset
-Random.seed!(rng, 1234)
+rng = StableRNG(1234)
 ℓ_loop = LoopProblem()
 ℓ_with_grad = ADgradient(:Enzyme, ℓ_loop)
 model = LogDensityModel(ℓ_with_grad)

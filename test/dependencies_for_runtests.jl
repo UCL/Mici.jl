@@ -3,7 +3,7 @@ using Distributions
 using LinearAlgebra
 using LogDensityProblems
 using PDMats: AbstractPDMat, PDMat, invquad
-using Random
+using StableRNGs
 using Test
 
 @kwdef struct 𝒩{T, M}
