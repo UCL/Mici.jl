@@ -8,7 +8,7 @@ h₁(z::PhasePoint, system::AbstractSystem) = -logdens(z, system)
 function h₂ end
 
 ∂h∂q(z::PhasePoint, system::AbstractSystem) = ∂h₁∂q(z, system) .+ ∂h₂∂q(z, system)
-∂h₁∂q(z::PhasePoint, system::AbstractSystem) = grad(z, system)
+∂h₁∂q(z::PhasePoint, system::AbstractSystem) = -grad(z, system)
 function ∂h₂∂q end
 
 ∂h∂p(z::PhasePoint, system::AbstractSystem) = ∂h₂∂p(z, system)
