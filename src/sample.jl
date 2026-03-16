@@ -1,6 +1,3 @@
-using AbstractMCMC
-using LogDensityProblems
-
 """
     AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler
 
