@@ -2,7 +2,8 @@ module Mici
 
 using Random
 using PDMats
-using Distributions
+using AbstractMCMC
+using LogDensityProblems
 
 include("typedefs.jl")
 
