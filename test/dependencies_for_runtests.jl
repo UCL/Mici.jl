@@ -1,14 +1,14 @@
 using AbstractMCMC: sample, LogDensityModel
-using Distributions
 using LinearAlgebra
 using LogDensityProblems
-using PDMats: AbstractPDMat, PDMat, invquad
+using PDMats
 using StableRNGs
+using Statistics
 using Test
 
 @kwdef struct 𝒩{T, M}
     μ::Vector{T} = [0.0 ; 0.0]
-    Σ::M = PDMat([1.0 0.5; 0.5 1.0])
+    Σ::M = ScalMat(2, 1.)
 end
 
 LogDensityProblems.dimension(p::𝒩) = length(p.μ)
