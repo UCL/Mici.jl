@@ -93,7 +93,7 @@ normal_ℓ = 𝒩()
 nothing #hide
 
 # We can then for example (for this simple two-dimensional case), compute the log density
-# across a grid of input points and use the visualize the distribution using a contour plot:
+# across a grid of input points and visualize the distribution using a contour plot:
 
 θ₁_grid = -2:0.02:2
 θ₂_grid = -2:0.02:2
@@ -158,11 +158,11 @@ nothing #hide
 # The sample call returns a named tuple with keys `traces`,
 # containing an object with the variables traced on each chain iteration,
 # and `statistics`, containing statistics about the transitions performed in each chain iteration.
-# We can for example inspect the average acceptance probability of the HMC proposal as follows:
+# We can for example inspect the average acceptance probability of the HMC proposals as follows:
 
 mean(normal_results.statistics.accept_probability)
 
-# We can visualize the samples overlayed over the contours of the target density using a scatter plot:
+# We can visualize the samples overlaid on the contours of the target density using a scatter plot, with we discarding an initial set of samples to allow for chain warm-up and thinning to avoid an overly dense plot:
 
 thinning_factor = 10
 discard_iterations = 1000
