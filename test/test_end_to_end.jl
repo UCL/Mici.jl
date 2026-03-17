@@ -33,8 +33,13 @@ gradlogdensity(g::GaussianDensity, x::AbstractVector) = - g.Σ \ (x - g.μ)
     # Run sampler
     x0 = [4.0; 4.0]
     nsamples = 200
+    
+    println("MAUNAL INTEGRATOR")
+    t1 = time()
     samples, accepts = sample_chain(h, integrator, x0, nsamples, rng)
-
+    t2 = time()
+    elapsed = t2 - t1
+    println("Elapsed: $(elapsed)s")
     #-------------------------------------------------------------------------------
     # Sanity checks
     #-------------------------------------------------------------------------------
@@ -43,6 +48,7 @@ gradlogdensity(g::GaussianDensity, x::AbstractVector) = - g.Σ \ (x - g.μ)
 
     @test all(isfinite, samples)
 
+    println("MANUAL INTEGRATOR ACCEPTS: $(accepts)")
     @test any(accepts) && any(.!accepts)
 
     @test norm(mean(samples, dims=1)' - μ) < 0.3

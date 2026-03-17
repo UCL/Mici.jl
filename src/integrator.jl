@@ -38,7 +38,6 @@ function integrate!(lfi::LeapfrogIntegrator, state::ChainState)
 end
 
 function step!(lai::LeapfrogAdapterIntegrator, state::ChainState)
-    println(state)
     x = vcat(q(state), p(state))
 
     # Integrate a single step
