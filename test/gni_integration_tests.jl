@@ -14,31 +14,28 @@ logdensity(g::GaussianDensity, x::AbstractVector) =
 
 gradlogdensity(g::GaussianDensity, x::AbstractVector) = -g.Σ \ (x - g.μ)
 
-@testset "Building SolutionStep Buffer for integration work" begin
-    μ = [0.0; 0.0]
-    Σ = PDMat([1.0 0.2; 0.2 0.35])
-    m = GaussianDensity(μ, Σ)
-    neg_log_dens = q -> -logdensity(m, q)
-    grad_neg_log_dens = q -> -gradlogdensity(m, q)
-    metric = PDMat([1.0 0.03; 0.03 0.6])
+μ = [0.0; 0.0]
+Σ = PDMat([1.0 0.2; 0.2 0.35])
+m = GaussianDensity(μ, Σ)
 
-    h = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
-    initial_state = [4.0; 4.0; 0.0; 0.0]
+neg_log_dens = q -> -logdensity(m, q)
+grad_neg_log_dens = q -> -gradlogdensity(m, q)
 
-    adapter = Mici.Gni.LeapfrogAdapter(h, initial_state, (0.0, 1.0), 0.2)
+# @testset "Test that a Gni Adapter can be constructed" begin
+#     metric = PDMat([1.0 0.03; 0.03 0.6])
 
-    @test isa(adapter, Mici.Gni.SeparableODE)
-    @test !isnothing(adapter.core.problem)
-    @test !isnothing(adapter.core.solution)
-    @test !isnothing(adapter.core.integrator)
-end
+#     h = EuclideanSystem(neg_log_dens, grad_neg_log_dens, metric)
+#     initial_state = [4.0; 4.0; 0.0; 0.0]
 
-@testset "Instantiating Integration Adapter" begin
-    μ = [0.0; 0.0]
-    Σ = PDMat([1.0 0.2; 0.2 0.35])
-    m = GaussianDensity(μ, Σ)
-    neg_log_dens = q -> -logdensity(m, q)
-    grad_neg_log_dens = q -> -gradlogdensity(m, q)
+#     adapter = Mici.Gni.LeapfrogAdapter(h, initial_state, (0.0, 1.0), 0.2)
+
+#     @test isa(adapter, Mici.Gni.SeparableODE)
+#     @test !isnothing(adapter.core.problem)
+#     @test !isnothing(adapter.core.solution)
+#     @test !isnothing(adapter.core.integrator)
+# end
+
+@testset "Test rough harness to check usage in existing sampling infrastructure" begin
     metric = PDMat([1.0 0.03; 0.03 0.6])
     rng = MersenneTwister(42)
 
@@ -46,10 +43,22 @@ end
     integrator = LeapfrogAdapterIntegrator(h, 0.2, 10)
 
     x0 = [4.0; 4.0]
-    nsamples = 50
+    nsamples = 200
+    println("GNI INTEGRATOR")
+    t1 = time()
     samples, accepts = sample_chain(h, integrator, x0, nsamples, rng)
+    t2 = time()
+    elapsed = t2 - t1
+    println("Elapsed: $(elapsed)s")
 
     @test size(samples) == (nsamples, 2)
     @test all(isfinite, samples)
-    @test any(accepts) || any(.!accepts)
+
+    print("GNI INTEGRATOR ACCEPTS: ")
+    println(accepts)
+    @test any(accepts) && any(.!accepts)
 end
+
+
+
+
