@@ -4,7 +4,7 @@
 # that can be used to generate approximate samples from target probability distributions of interest.
 # In particular the package implements _Hamiltonian Monte Carlo_ (HMC) samplers which
 # use the gradient of the target distribution density to propose long-range moves with
-# a high probability of acceptance by simulaitng Hamiltonian dynamics.
+# a high probability of acceptance by simulating Hamiltonian dynamics.
 #
 # Mici is designed to work with the [`LogDensityProblems`](https://www.tamaspapp.eu/LogDensityProblems.jl/stable/)
 # and [`AbstractMCMC`](https://turinglang.org/AbstractMCMC.jl/stable/) interfaces,
@@ -119,7 +119,7 @@ nothing #hide
 # The HMC sampler we will use has two key parameters that need to be specified:
 # the integrator step size `ϵ` 
 # and the time to integrate forward the Hamiltonian dynamics by in each proposal.
-# Here we will use a variant of the HMC algorithm which that randomizes the integration time 
+# Here we will use a variant of the HMC algorithm which randomizes the integration time 
 # by sampling uniformly from some interval:
 
 initial_ϵ = 0.5
