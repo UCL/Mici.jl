@@ -31,6 +31,10 @@ struct V1Field{S}
     z::PhasePoint{Float64}
 end
 
+function V1Field(system::S, d::Integer) where {S<:AbstractTractableFlowSystem}
+    z = PhasePoint(zeros(d), zeros(d), NaN, zeros(d), false)
+    return V1Field{S}(system, Int(d), z)
+end
 
 function (f::V1Field)(v,t,q,params)
     # integer divison to get a int
@@ -46,6 +50,11 @@ struct V2Field{S}
     system::S
     d::Int
     z::PhasePoint{Float64}
+end
+
+function V2Field(system::S, d::Integer) where {S<:AbstractTractableFlowSystem}
+    z = PhasePoint(zeros(d), zeros(d), NaN, zeros(d), false)
+    return V2Field{S}(system, Int(d), z)
 end
 
 function (f::V2Field)(v, t, x, params)
@@ -68,11 +77,16 @@ struct Q1Flow{S}
     z::PhasePoint{Float64}
 end
 
+function Q1Flow(system::S, d::Integer) where {S<:AbstractTractableFlowSystem}
+    z = PhasePoint(zeros(d), zeros(d), NaN, zeros(d), false)
+    return Q1Flow{S}(system, Int(d), z)
+end
+
 function (f::Q1Flow)(x1, t1, x0, t0, params)
     d = f.d
     x1 .= x0
-    f.z.q = @view(q1[begin:d])
-    f.z.p = @view(q1[d+1:end])
+    f.z.q = @view(x1[begin:d])
+    f.z.p = @view(x1[d+1:end])
     Φ₂!(f.z, f.system, t1 - t0)
     x1[begin:d] .= f.z.q
     return nothing
@@ -83,11 +97,16 @@ struct Q2Flow{S}
     d::Int
 end
 
+function Q2Flow(system::S, d::Integer) where {S<:AbstractTractableFlowSystem}
+    z = PhasePoint(zeros(d), zeros(d), NaN, zeros(d), false)
+    return Q2Flow{S}(system, Int(d), z)
+end
+
 function (f::Q2Flow)(x1, t1, x0, t0, params)
     d = f.d
     x1 .= x0
-    f.z.q = @view(q1[begin:d])
-    f.z.p = @view(q1[d+1:end])
+    f.z.q = @view(x1[begin:d])
+    f.z.p = @view(x1[d+1:end])
     Φ₁!(f.scratch_z, f.system, t1 - t0)
     x1[d+1:end] .= f.z.p
     return nothing
