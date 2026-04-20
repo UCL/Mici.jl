@@ -1,4 +1,5 @@
 using AbstractMCMC: sample, LogDensityModel
+using GeometricIntegrators
 using LinearAlgebra
 using LogDensityProblems
 using PDMats

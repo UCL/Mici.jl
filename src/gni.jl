@@ -1,6 +1,6 @@
 module Gni
 using GeometricIntegrators
-using ..Mici: AbstractSystem, ChainState, h1_flow, h2_flow, ∂H₁∂q, ∂H₂∂p
+using ..Mici: AbstractSystem, h1_flow, h2_flow, ∂H₁∂q, ∂H₂∂p
 
 #=
 This is a module offering a thin wrapper to GeometricIntegrators.jl
@@ -66,8 +66,8 @@ end
 function (f::Q1Flow)(q1, t1, q0, t0, params)
     d = f.d
     q1 .= q0
-    state = ChainState(@view(q1[begin:d]), @view(q1[d+1:end]))
-    h1_flow(f.system, state, t1 - t0)
+    p = @view(q1[begin:d])
+    p .-= (t1 - t0) .* ∂h₁∂q(h, state)
     return nothing
 end
 
@@ -79,6 +79,8 @@ end
 function (f::Q2Flow)(q1, t1, q0, t0, params)
     d = f.d
     q1 .= q0
+    q = @view(q1[d+1:end])
+    q .+= (t1 - t0) .* ∂h₂∂p(h, state)
     state = ChainState(@view(q1[begin:d]), @view(q1[d+1:end]))
     h2_flow(f.system, state, t1 - t0)
     return nothing
