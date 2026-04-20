@@ -1,3 +1,58 @@
+"""
+    AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler
+
+Abstract supertype for Mici samplers, parameterized by the system type `S` and integrator type `I`.
+"""
+abstract type AbstractMiciSampler{S, I} <: AbstractMCMC.AbstractSampler end
+
+"""
+    HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
+
+Struct representing a Hamiltonian Monte Carlo sampler, parameterized by:
+  - `S`  - type of the system (e.g., `EuclideanSystem`),
+  - `I`  - type of the integrator (e.g., `LeapfrogIntegrator`),
+  - `TI` - type of the integration transition (e.g., `StaticMetropolisIntegrationTransition`),
+  - `TM` - type of the momentum transition (e.g., `IndependentMomentumTransition`).
+"""
+struct HMC{S,I,TI,TM} <: AbstractMiciSampler{S,I}
+    integration_transition::TI
+    momentum_transition::TM
+end
+
+function HMC{S,I}(integration_time::Real) where {S,I}
+    HMC{S,I}(StaticMetropolisIntegrationTransition(integration_time))
+end
+
+function HMC{S,I}(integration_transition::TI, momentum_transition::TM=IndependentMomentumTransition()) where {S,I,TI,TM}
+    HMC{S,I,TI,TM}(integration_transition, momentum_transition)
+end
+
+function HMC{S,I}(integration_time_lower::Real, integration_time_upper::Real) where {S,I}
+    HMC{S,I}(
+        RandomMetropolisIntegrationTransition(
+            integration_time_lower, integration_time_upper
+        ),
+    )
+end
+
+const EuclideanHMC{I,TI,TM} = HMC{EuclideanSystem,I,TI,TM}
+
+function EuclideanHMC(integration_time::Real)
+    EuclideanHMC{LeapfrogIntegrator}(StaticMetropolisIntegrationTransition(integration_time))
+end
+
+function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real)
+    EuclideanHMC{LeapfrogIntegrator}(integration_time_lower, integration_time_upper)
+end
+
+function state_type(
+    ::HMC{S,I,TI,TM}
+) where {S,I,TI<:AbstractMetropolisIntegrationTransition,TM}
+    MetropolisHMCState
+end
+
+
+###OLD
 # Generate samples from target distribution using Hamiltonian Monte Carlo
 function hmc_step(
     h::AbstractSystem,
@@ -23,24 +78,6 @@ function hmc_step(
     else
         return q(state), false
     end
-end
-
-function metropolis_integration_transition!(
-    state::MetropolisHMCState, rng::AbstractRNG, integration_time::Real
-)
-    n_step = Int(integration_time ÷ state.integrator.ϵ)
-    copy!(state.proposed_phase_point, state.phase_point)
-    for s in 1:n_step
-        step!(state.proposed_phase_point, state.integrator, state.system)
-    end
-    state.proposed_phase_point.p .*= -1
-    Δh = h(state.phase_point, state.system) - h(state.proposed_phase_point, state.system)
-    accept_probability = isnan(Δh) ? 0.0 : exp(min(0.0, Δh))
-    accepted = rand(rng) < accept_probability
-    if accepted
-        copy!(state.phase_point, state.proposed_phase_point)
-    end
-    return (; accept_probability, accepted, n_step)
 end
 
 
