@@ -1,7 +1,3 @@
-include("dependencies_for_runtests.jl")
-
-using Mici.Mici: EuclideanHMC
-
 @testset "Abstract MCMC e2e" begin
 
     ℓ = 𝒩()
