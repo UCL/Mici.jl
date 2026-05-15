@@ -107,7 +107,7 @@ function (f::Q2Flow)(x1, t1, x0, t0, params)
     x1 .= x0
     f.z.q = @view(x1[begin:d])
     f.z.p = @view(x1[d+1:end])
-    Φ₁!(f.scratch_z, f.system, t1 - t0)
+    Φ₁!(f.z, f.system, t1 - t0)
     x1[d+1:end] .= f.z.p
     return nothing
 end
