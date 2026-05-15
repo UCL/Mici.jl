@@ -6,6 +6,8 @@ using StableRNGs
 using Statistics
 using Test
 
+const SEED = 827628136287
+
 @kwdef struct 𝒩{T, M}
     μ::Vector{T} = [0.0 ; 0.0]
     Σ::M = ScalMat(2, 1.)
