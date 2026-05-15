@@ -151,25 +151,30 @@ function merge_subtrees(
     return SubTree(
         left.left,
         right.right,
-        left.momentum + pos.momentum,
-        left.weight + pos.weight,
+        left.momentum + right.momentum,
+        left.weight + right.weight,
         left.depth + 1,
     )
 end
 
-function build_tree(depth::Int, phase_point::PhasePoint, integrator::AbstractIntegrator, system::AbstractSystem)
+function build_tree(depth::Int, direction::Int, phase_point::PhasePoint, integrator::AbstractIntegrator, system::AbstractSystem)
     if depth == 0
         new_phase_point = copy(phase_point)
-        step!(new_phase_point, integrator, system)
+        step!(new_phase_point, integrator, system; direction)
         h_value = h(new_phase_point, system)
 
         return new_leaf(new_phase_point, h_value)
     end
 
-    inner_tree = build_tree(depth - 1, phase_point, integrator, system)
+    inner_tree = build_tree(depth - 1, direction, phase_point, integrator, system)
+    phase_point = direction == 1 ? inner_tree.right : inner_tree.left
+    outer_tree = build_tree(depth - 1, direction, phase_point, integrator, system)
+    left_subtree, right_subtree = if direction == 1
+        inner_tree, outer_tree
+    else
+        outer_tree, inner_tree
+    end
+    tree = merge_subtrees(left_subtree, right_subtree)
 
-    
-
-
-
+    return tree
 end
