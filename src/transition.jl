@@ -23,6 +23,11 @@ Abstract supertype for Metropolis-adjusted integration transitions in MCMC sampl
 abstract type AbstractMetropolisIntegrationTransition{T} <: AbstractIntegrationTransition end
 
 """
+    AbstractNUTSTransition{T} <: AbstractIntegrationTransition
+"""
+abstract type AbstractNUTSTransition <: AbstractIntegrationTransition end
+
+"""
     AbstractMomentumTransition <: AbstractTransition
 
 Abstract supertype for momentum transitions in MCMC samplers. 
@@ -115,3 +120,56 @@ function transition!(
     return nothing
 end
 
+
+struct SubTree{C, T, W}
+    left::C
+    right::C
+    momentum::T
+    weight::W
+    depth::Int
+end
+
+struct NUTSTransition{T} <: AbstractNUTSTransition
+    max_depth::Int
+    max_delta_h::T
+end
+
+function new_leaf(
+    phase_point::PhasePoint,
+    h,
+)
+    # ToDo numerical stabilisation, logsumexp
+    return SubTree(phase_point, phase_point, phase_point.p, exp(-h), 0)
+end
+
+function merge_subtrees(
+    left::SubTree,
+    right::SubTree,
+)
+    left.depth == right.depth || error("Cannot merge subtrees of different depths.")
+
+    return SubTree(
+        left.left,
+        right.right,
+        left.momentum + pos.momentum,
+        left.weight + pos.weight,
+        left.depth + 1,
+    )
+end
+
+function build_tree(depth::Int, phase_point::PhasePoint, integrator::AbstractIntegrator, system::AbstractSystem)
+    if depth == 0
+        new_phase_point = copy(phase_point)
+        step!(new_phase_point, integrator, system)
+        h_value = h(new_phase_point, system)
+
+        return new_leaf(new_phase_point, h_value)
+    end
+
+    inner_tree = build_tree(depth - 1, phase_point, integrator, system)
+
+    
+
+
+
+end

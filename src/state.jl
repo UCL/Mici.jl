@@ -18,6 +18,10 @@ mutable struct PhasePoint{T}
     valid::Bool
 end
 
+function PhasePoint(q::Vector{T}, p::Vector{T}, dimension::Integer) where {T}
+    PhasePoint{T}(q, p, T(NaN), Vector{T}(undef, dimension), false)
+end
+
 function PhasePoint(::UndefInitializer, dimension::Integer, T::Type=Float64)
     PhasePoint(Vector{T}(undef, dimension), Vector{T}(undef, dimension), T(NaN), Vector{T}(undef, dimension), false)
 end
@@ -94,6 +98,7 @@ Concrete subtypes of `AbstractState` should contain at least the following field
 """
 abstract type AbstractState{P,S,I} end
 
+
 """
     MetropolisHMCState{P, S, I} <: AbstractState{P,S,I}
 
@@ -104,6 +109,10 @@ struct MetropolisHMCState{P,S,I} <: AbstractState{P,S,I}
     proposed_phase_point::P
     system::S
     integrator::I
+end
+
+function get_momentum(state::MetropolisHMCState)
+    return state.phase_point.p
 end
 
 function MetropolisHMCState(
