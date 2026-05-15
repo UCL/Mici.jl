@@ -12,10 +12,11 @@ include("state.jl")
 include("system.jl")
 export EuclideanSystem
 
-include("gni.jl")
-
 include("integrator.jl")
 export LeapfrogIntegrator
+
+include("gni.jl")
+export IntegratorAdapterCore
 
 include("transition.jl")
 export IndependentMomentumTransition, CorrelatedMomentumTransition, RandomMetropolisIntegrationTransition, StaticMetropolisIntegrationTransition

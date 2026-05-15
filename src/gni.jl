@@ -1,4 +1,3 @@
-module Gni
 using GeometricIntegrators
 using ..Mici: AbstractSystem, ChainState, h1_flow, h2_flow, ∂H₁∂q, ∂H₂∂p
 
@@ -12,14 +11,6 @@ that are defined as part of the transitions and sampling steps.
 The interface should do the following
 =#
 
-abstract type AbstractIntegratorAdapter end
-
-struct IntegratorAdapterCore{P,M,S,I}
-    problem::P
-    method::M
-    solution::S
-    integrator::I
-end
 
 
 # TODO add some traits or capabilities to decorate this type
@@ -101,7 +92,7 @@ end
 
 # TODO This naming is pretty poor, need to get better understanding
 # of the domain and its mapping to our MCMC space
-struct SeparableODE{C<:IntegratorAdapterCore} <: AbstractIntegratorAdapter
+struct SeparableODE{C<:IntegratorAdapterCore} <: AbstractIntegrator
     core::C
 
     function SeparableODE(system::AbstractSystem, initial_state::AbstractArray, timespan::Tuple, step_size::Real, method::GeometricMethod)
@@ -117,5 +108,3 @@ end
 
 
 LeapfrogAdapter(args...; kwargs...) = SeparableODE(args...; method=StrangA(), kwargs...)
-
-end
