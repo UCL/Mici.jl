@@ -46,7 +46,7 @@ function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real
 end
 
 function EuclideanHMC1(integration_time::Real)
-    EuclideanHMC{LeapfrogIntegrator}(StaticMetropolisIntegrationTransition(integration_time))
+    EuclideanHMC{LeapfrogAdapter}(StaticMetropolisIntegrationTransition(integration_time))
 end
 
 function state_type(
