@@ -1,12 +1,8 @@
-include("dependencies_for_runtests.jl")
-
-using Mici.Mici: EuclideanHMC
-
 @testset "Abstract MCMC e2e" begin
 
     ℓ = 𝒩()
     model = LogDensityModel(ℓ)
-    rng = StableRNG(1234)
+    rng = StableRNG(SEED)
     C1 = 2.
     C2 = 5.
 
