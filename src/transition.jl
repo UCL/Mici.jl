@@ -131,7 +131,14 @@ end
 
 struct NUTSTransition{T} <: AbstractNUTSTransition
     max_depth::Int
-    max_delta_h::T
+    max_Δh::T
+end
+
+struct NUTSTreeContext{I,S,T}
+    integrator::I
+    system::S
+    initial_h::T
+    max_Δh::T
 end
 
 function new_leaf(
@@ -157,18 +164,19 @@ function merge_subtrees(
     )
 end
 
-function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, integrator::AbstractIntegrator, system::AbstractSystem)
+function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, context::NUTSTreeContext)
     if depth == 0
-        new_phase_point = copy(phase_point)
-        step!(new_phase_point, integrator, system; direction)
-        h_value = h(new_phase_point, system)
 
-        return new_leaf(new_phase_point, h_value), new_phase_point
+        new_phase_point = copy(phase_point)
+        step!(new_phase_point, context.integrator, context.system; direction)
+        tree = new_leaf(new_phase_point, h(new_phase_point, context.system))
+
+        return tree, new_phase_point
     end
 
-    inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, integrator, system)
+    inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
     phase_point = direction == 1 ? inner_tree.right : inner_tree.left
-    outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, integrator, system)
+    outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
     left_subtree, right_subtree = if direction == 1
         inner_tree, outer_tree
     else
@@ -184,8 +192,10 @@ end
 
 function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTransition)
 
-    tree = new_leaf(copy(state.phase_point), h(state.phase_point, state.system))
+    initial_h = h(state.phase_point, state.system)
+    tree = new_leaf(copy(state.phase_point), initial_h)
     next_phase_point = copy(state.phase_point)
+    context = NUTSTreeContext(state.integrator, state.system, initial_h, transition.max_Δh)
 
     for depth in 0:(transition.max_depth - 1)
 
@@ -196,7 +206,7 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
             copy!(next_phase_point, tree.left)
         end
 
-        new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, state.integrator, state.system)
+        new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, context)
 
         accept_prob = min(new_tree.weight / tree.weight, 1.0)
         if rand(rng) < accept_prob

@@ -1,7 +1,7 @@
 include("dependencies_for_runtests.jl")
 
 using Mici.Mici: MetropolisHMCState, PhasePoint, EuclideanSystem, LeapfrogIntegrator, NUTSTransition
-using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!
+using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!, NUTSTreeContext, h
 
 @testset "NUTS build_tree for depth $depth" for depth in (1, 2, 5, 10)
     ℓ = 𝒩()
@@ -12,9 +12,10 @@ using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!
     M = PDMat([1.0 0.5; 0.5 1.0])
     system = EuclideanSystem(M, ℓ)
     integrator = LeapfrogIntegrator(0.1)
+    context = NUTSTreeContext(integrator, system, h(phase_point, system), 10.0)
 
     direction = 1
-    tree, _ = build_tree(rng, depth, direction, phase_point, integrator, system)
+    tree, _ = build_tree(rng, depth, direction, phase_point, context)
 
     Mici.step!(phase_point, integrator, system; direction)
 
@@ -52,7 +53,7 @@ end
     integrator = LeapfrogIntegrator(0.1)
     state = MetropolisHMCState(phase_point, system, integrator)
 
-    transition = NUTSTransition(4, 10)
+    transition = NUTSTransition(4, 10.0)
     transition!(state, rng, transition)
 
 end
