@@ -143,12 +143,14 @@ struct NUTSTreeContext{I,S,T}
     max_Δh::T
 end
 
-mutable struct NUTSStats
+mutable struct NUTSTreeStats
     n_steps::Int
     diverged::Bool
+    reject_prob::Float64
+    sum_accept_prob::Float64
 end
 
-NUTSStats() = NUTSStats(0, false)
+NUTSTreeStats() = NUTSTreeStats(0, false, 1.0, 0.0)
 
 function new_leaf(
     phase_point::PhasePoint,
@@ -173,7 +175,7 @@ function merge_subtrees(
     )
 end
 
-function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, context::NUTSTreeContext, stats::NUTSStats)
+function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, context::NUTSTreeContext, stats::NUTSTreeStats)
     if depth == 0
 
         new_phase_point = copy(phase_point)
@@ -181,9 +183,12 @@ function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::P
         h_value = h(new_phase_point, context.system)
         tree = new_leaf(new_phase_point, h_value)
 
-        terminate = h_value - context.initial_h > context.max_Δh
+        Δh = h_value - context.initial_h
+        terminate = !isfinite(Δh) || Δh > context.max_Δh
         stats.diverged = terminate
         stats.n_steps += 1
+        accept_prob = isfinite(Δh) ? exp(min(-Δh, 0.0)) : 0.0
+        stats.sum_accept_prob += accept_prob
 
         return terminate, tree, new_phase_point
     end
@@ -221,9 +226,11 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
     tree = new_leaf(copy(state.phase_point), initial_h)
     next_phase_point = copy(state.phase_point)
     context = NUTSTreeContext(state.integrator, state.system, initial_h, transition.max_Δh)
-    stats = NUTSStats()
+    stats = NUTSTreeStats()
+    final_depth = 0
 
     for depth in 0:(transition.max_depth - 1)
+        final_depth = depth
 
         direction = rand(rng, Bool) ? 1 : -1
         if direction == 1
@@ -242,6 +249,7 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
         if rand(rng) < accept_prob
             copy!(state.phase_point, proposal)
         end
+        stats.reject_prob *= 1.0 - accept_prob
 
         left_subtree = direction == 1 ? tree : new_tree
         right_subtree = direction == 1 ? new_tree : tree
@@ -252,8 +260,13 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
         end
     end
 
+    av_accept_prob = stats.n_steps == 0 ? 0.0 : stats.sum_accept_prob / stats.n_steps
+
     return (;
         n_steps = stats.n_steps,
         diverged = stats.diverged,
+        av_accept_prob = av_accept_prob,
+        reject_prob = stats.reject_prob,
+        tree_depth = final_depth,
     )
 end
