@@ -120,7 +120,9 @@ function transition!(
     return nothing
 end
 
-
+function no_u_turn(system::AbstractSystem, left_phase_point::PhasePoint, right_phase_point::PhasePoint, sum_momentum::Vector)
+    ∂h∂p(left_phase_point, system)' * sum_momentum < 0 || ∂h∂p(right_phase_point, system)' * sum_momentum < 0
+end
 struct SubTree{C, T, W}
     left::C
     right::C
@@ -140,6 +142,13 @@ struct NUTSTreeContext{I,S,T}
     initial_h::T
     max_Δh::T
 end
+
+mutable struct NUTSStats
+    n_steps::Int
+    diverged::Bool
+end
+
+NUTSStats() = NUTSStats(0, false)
 
 function new_leaf(
     phase_point::PhasePoint,
@@ -164,7 +173,7 @@ function merge_subtrees(
     )
 end
 
-function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, context::NUTSTreeContext)
+function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, context::NUTSTreeContext, stats::NUTSStats)
     if depth == 0
 
         new_phase_point = copy(phase_point)
@@ -173,18 +182,20 @@ function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::P
         tree = new_leaf(new_phase_point, h_value)
 
         terminate = h_value - context.initial_h > context.max_Δh
+        stats.diverged = terminate
+        stats.n_steps += 1
 
         return terminate, tree, new_phase_point
     end
 
-    terminate, inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
+    terminate, inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, context, stats)
     if terminate
         return true, nothing, nothing
     end
 
     phase_point = direction == 1 ? inner_tree.right : inner_tree.left
 
-    terminate, outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
+    terminate, outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, context, stats)
     if terminate
         return true, nothing, nothing
     end
@@ -199,7 +210,7 @@ function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::P
     accept_outer_prob = min(outer_tree.weight / tree.weight, 1.0)
     proposal = rand(rng) < accept_outer_prob ? outer_proposal : inner_proposal
 
-    terminate = false
+    terminate = no_u_turn(context.system, tree.left, tree.right, tree.momentum)
 
     return terminate, tree, proposal
 end
@@ -210,6 +221,7 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
     tree = new_leaf(copy(state.phase_point), initial_h)
     next_phase_point = copy(state.phase_point)
     context = NUTSTreeContext(state.integrator, state.system, initial_h, transition.max_Δh)
+    stats = NUTSStats()
 
     for depth in 0:(transition.max_depth - 1)
 
@@ -220,7 +232,7 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
             copy!(next_phase_point, tree.left)
         end
 
-        terminate, new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, context)
+        terminate, new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, context, stats)
 
         if terminate
             break
@@ -235,7 +247,13 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
         right_subtree = direction == 1 ? new_tree : tree
         tree = merge_subtrees(left_subtree, right_subtree)
 
+        if no_u_turn(context.system, tree.left, tree.right, tree.momentum)
+            break
+        end
     end
 
-    return (; )
+    return (;
+        n_steps = stats.n_steps,
+        diverged = stats.diverged,
+    )
 end
