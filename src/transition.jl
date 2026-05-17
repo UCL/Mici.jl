@@ -260,12 +260,12 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
         end
     end
 
-    av_accept_prob = stats.n_steps == 0 ? 0.0 : stats.sum_accept_prob / stats.n_steps
+    accept_probability = stats.n_steps == 0 ? 0.0 : stats.sum_accept_prob / stats.n_steps
 
     return (;
         n_steps = stats.n_steps,
         diverged = stats.diverged,
-        av_accept_prob = av_accept_prob,
+        accept_probability = accept_probability,
         reject_prob = stats.reject_prob,
         tree_depth = final_depth,
     )
