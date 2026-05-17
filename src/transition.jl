@@ -157,18 +157,18 @@ function merge_subtrees(
     )
 end
 
-function build_tree(depth::Int, direction::Int, phase_point::PhasePoint, integrator::AbstractIntegrator, system::AbstractSystem)
+function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, integrator::AbstractIntegrator, system::AbstractSystem)
     if depth == 0
         new_phase_point = copy(phase_point)
         step!(new_phase_point, integrator, system; direction)
         h_value = h(new_phase_point, system)
 
-        return new_leaf(new_phase_point, h_value)
+        return new_leaf(new_phase_point, h_value), new_phase_point
     end
 
-    inner_tree = build_tree(depth - 1, direction, phase_point, integrator, system)
+    inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, integrator, system)
     phase_point = direction == 1 ? inner_tree.right : inner_tree.left
-    outer_tree = build_tree(depth - 1, direction, phase_point, integrator, system)
+    outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, integrator, system)
     left_subtree, right_subtree = if direction == 1
         inner_tree, outer_tree
     else
@@ -176,5 +176,37 @@ function build_tree(depth::Int, direction::Int, phase_point::PhasePoint, integra
     end
     tree = merge_subtrees(left_subtree, right_subtree)
 
-    return tree
+    accept_outer_prob = min(outer_tree.weight / tree.weight, 1.0)
+    proposal = rand(rng) < accept_outer_prob ? outer_proposal : inner_proposal
+
+    return tree, proposal
+end
+
+function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTransition)
+
+    tree = new_leaf(state.proposed_phase_point, h(state.proposed_phase_point, state.system))
+
+    for depth in 0:transition.max_depth
+
+        direction = rand(rng, Bool) ? 1 : -1
+        if direction == 1
+            copy!(state.proposed_phase_point, tree.right)
+        else
+            copy!(state.proposed_phase_point, tree.left)
+        end
+
+        new_tree, proposal = build_tree(rng, depth, direction, state.proposed_phase_point, state.integrator, state.system)
+
+        accept_prob = min(new_tree.weight / tree.weight, 1.0)
+        if rand(rng) < accept_prob
+            copy!(state.phase_point, proposal)
+        end
+
+        left_subtree = direction == 1 ? tree : new_tree
+        right_subtree = direction == 1 ? new_tree : tree
+        tree = merge_subtrees(left_subtree, right_subtree)
+
+    end
+
+    return nothing
 end
