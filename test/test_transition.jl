@@ -1,10 +1,11 @@
 include("dependencies_for_runtests.jl")
 
-using Mici.Mici: MetropolisHMCState, PhasePoint, EuclideanSystem, LeapfrogIntegrator
-using Mici.Mici: new_leaf, merge_subtrees, build_tree
+using Mici.Mici: MetropolisHMCState, PhasePoint, EuclideanSystem, LeapfrogIntegrator, NUTSTransition
+using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!
 
-@testset "NUTS for depth $depth" for depth in (1, 2, 5, 10)
+@testset "NUTS build_tree for depth $depth" for depth in (1, 2, 5, 10)
     ℓ = 𝒩()
+    rng = StableRNG(1234)
     q = [1.0, 1.0]
     p = [1.0, 1.0]
     phase_point = PhasePoint(q, p, 2)
@@ -13,7 +14,7 @@ using Mici.Mici: new_leaf, merge_subtrees, build_tree
     integrator = LeapfrogIntegrator(0.1)
 
     direction = 1
-    tree = build_tree(depth, direction, phase_point, integrator, system)
+    tree, _ = build_tree(rng, depth, direction, phase_point, integrator, system)
 
     Mici.step!(phase_point, integrator, system; direction)
 
@@ -37,5 +38,26 @@ using Mici.Mici: new_leaf, merge_subtrees, build_tree
         @test all(tree.left.q ≈ phase_point.q)
         @test all(tree.left.p ≈ phase_point.p)
     end
+
+end
+
+@testset "NUTS transition" begin
+    ℓ = 𝒩()
+    q = [1.0, 1.0]
+    p = [1.0, 1.0]
+    rng = StableRNG(1234)
+    phase_point = PhasePoint(q, p, 2)
+    M = PDMat([1.0 0.5; 0.5 1.5])
+    system = EuclideanSystem(M, ℓ)
+    integrator = LeapfrogIntegrator(0.1)
+    state = MetropolisHMCState(phase_point, system, integrator)
+
+    display(state.phase_point.q)
+
+    transition = NUTSTransition(4, 10)
+
+    transition!(state, rng, transition)
+
+    display(state.phase_point.q)
 
 end
