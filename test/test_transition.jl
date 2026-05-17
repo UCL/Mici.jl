@@ -12,10 +12,10 @@ using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!, NUTSTreeCont
     M = PDMat([1.0 0.5; 0.5 1.0])
     system = EuclideanSystem(M, ℓ)
     integrator = LeapfrogIntegrator(0.1)
-    context = NUTSTreeContext(integrator, system, h(phase_point, system), 10.0)
+    context = NUTSTreeContext(integrator, system, h(phase_point, system), 1000.0)
 
     direction = 1
-    tree, _ = build_tree(rng, depth, direction, phase_point, context)
+    _, tree, _ = build_tree(rng, depth, direction, phase_point, context)
 
     Mici.step!(phase_point, integrator, system; direction)
 
@@ -42,7 +42,7 @@ using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!, NUTSTreeCont
 
 end
 
-@testset "NUTS transition" begin
+@testset "NUTS transition! termination criteria" begin
     ℓ = 𝒩()
     q = [1.0, 1.0]
     p = [1.0, 1.0]
@@ -52,8 +52,11 @@ end
     system = EuclideanSystem(M, ℓ)
     integrator = LeapfrogIntegrator(0.1)
     state = MetropolisHMCState(phase_point, system, integrator)
-
-    transition = NUTSTransition(4, 10.0)
+    transition = NUTSTransition(4, 0.01)
     transition!(state, rng, transition)
 
+    @test state.phase_point.q == q
+    @test state.phase_point.p == p
+
 end
+

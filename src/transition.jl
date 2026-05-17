@@ -169,14 +169,26 @@ function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::P
 
         new_phase_point = copy(phase_point)
         step!(new_phase_point, context.integrator, context.system; direction)
-        tree = new_leaf(new_phase_point, h(new_phase_point, context.system))
+        h_value = h(new_phase_point, context.system)
+        tree = new_leaf(new_phase_point, h_value)
 
-        return tree, new_phase_point
+        terminate = h_value - context.initial_h > context.max_Δh
+
+        return terminate, tree, new_phase_point
     end
 
-    inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
+    terminate, inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
+    if terminate
+        return true, nothing, nothing
+    end
+
     phase_point = direction == 1 ? inner_tree.right : inner_tree.left
-    outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
+
+    terminate, outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, context)
+    if terminate
+        return true, nothing, nothing
+    end
+
     left_subtree, right_subtree = if direction == 1
         inner_tree, outer_tree
     else
@@ -187,7 +199,9 @@ function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::P
     accept_outer_prob = min(outer_tree.weight / tree.weight, 1.0)
     proposal = rand(rng) < accept_outer_prob ? outer_proposal : inner_proposal
 
-    return tree, proposal
+    terminate = false
+
+    return terminate, tree, proposal
 end
 
 function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTransition)
@@ -206,7 +220,11 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
             copy!(next_phase_point, tree.left)
         end
 
-        new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, context)
+        terminate, new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, context)
+
+        if terminate
+            break
+        end
 
         accept_prob = min(new_tree.weight / tree.weight, 1.0)
         if rand(rng) < accept_prob
