@@ -52,12 +52,7 @@ end
     integrator = LeapfrogIntegrator(0.1)
     state = MetropolisHMCState(phase_point, system, integrator)
 
-    display(state.phase_point.q)
-
     transition = NUTSTransition(4, 10)
-
     transition!(state, rng, transition)
-
-    display(state.phase_point.q)
 
 end

@@ -45,10 +45,10 @@ function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real
     EuclideanHMC{LeapfrogIntegrator}(integration_time_lower, integration_time_upper)
 end
 
-const NUTS{S,I,TM} = HMC{S,I,AbstractNUTSTransition,TM}
+const NUTS{S,I,TI<:AbstractNUTSTransition,TM} = HMC{S,I,TI,TM}
 
 function EuclideanNUTS(max_depth::Int)
-    NUTS{EuclideanSystem, LeapfrogIntegrator}(NUTSTransition(max_depth, max_delta_h=1000.0))
+    HMC{EuclideanSystem,LeapfrogIntegrator}(NUTSTransition(max_depth, 1000.0))
 end
 
 function state_type(

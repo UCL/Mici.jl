@@ -184,18 +184,19 @@ end
 
 function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTransition)
 
-    tree = new_leaf(state.proposed_phase_point, h(state.proposed_phase_point, state.system))
+    tree = new_leaf(copy(state.phase_point), h(state.phase_point, state.system))
+    next_phase_point = copy(state.phase_point)
 
-    for depth in 0:transition.max_depth
+    for depth in 0:(transition.max_depth - 1)
 
         direction = rand(rng, Bool) ? 1 : -1
         if direction == 1
-            copy!(state.proposed_phase_point, tree.right)
+            copy!(next_phase_point, tree.right)
         else
-            copy!(state.proposed_phase_point, tree.left)
+            copy!(next_phase_point, tree.left)
         end
 
-        new_tree, proposal = build_tree(rng, depth, direction, state.proposed_phase_point, state.integrator, state.system)
+        new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, state.integrator, state.system)
 
         accept_prob = min(new_tree.weight / tree.weight, 1.0)
         if rand(rng) < accept_prob
@@ -208,5 +209,5 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
 
     end
 
-    return nothing
+    return (; )
 end
