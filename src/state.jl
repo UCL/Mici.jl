@@ -111,10 +111,6 @@ struct MetropolisHMCState{P,S,I} <: AbstractState{P,S,I}
     integrator::I
 end
 
-function get_momentum(state::MetropolisHMCState)
-    return state.phase_point.p
-end
-
 function MetropolisHMCState(
     phase_point::PhasePoint, system::AbstractSystem, integrator::AbstractIntegrator
 )
