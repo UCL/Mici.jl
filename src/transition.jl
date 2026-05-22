@@ -245,6 +245,7 @@ function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTra
             break
         end
 
+        # bias proposals towards new subtrees to encourage exploration of the state space
         accept_prob = min(new_tree.weight / tree.weight, 1.0)
         if rand(rng) < accept_prob
             copy!(state.phase_point, proposal)

@@ -60,5 +60,7 @@ end
 function state_type(
     ::HMC{S,I,TI,TM}
 ) where {S,I,TI<:AbstractNUTSTransition,TM}
+    # TODO: Define a separate state type for NUTS or even a more general
+    # state type with metaprogramming to include fields specific to different transition types.
     MetropolisHMCState
 end
