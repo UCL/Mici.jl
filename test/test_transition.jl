@@ -1,7 +1,7 @@
 include("dependencies_for_runtests.jl")
 
 using Mici.Mici: MetropolisHMCState, PhasePoint, EuclideanSystem, LeapfrogIntegrator, NUTSTransition
-using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!
+using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!, state_type
 
 @testset "NUTS build_tree for depth $depth" for depth in (1, 2, 5, 10)
     ℓ = 𝒩()
@@ -40,6 +40,7 @@ using Mici.Mici: new_leaf, merge_subtrees, build_tree, transition!
     end
 
 end
+
 
 @testset "NUTS transition" begin
     ℓ = 𝒩()
