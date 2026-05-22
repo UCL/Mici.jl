@@ -1,16 +1,14 @@
 include("dependencies_for_runtests.jl")
 
-using Mici.Mici: EuclideanHMC
+using Mici.Mici: EuclideanHMC, EuclideanNUTS
 
-@testset "Abstract MCMC e2e" begin
+@testset "Abstract MCMC e2e for sampler $(sampler.integration_transition)" for sampler in (EuclideanHMC(1.5, 3.0), EuclideanNUTS(7))
 
     ℓ = 𝒩()
     model = LogDensityModel(ℓ)
     rng = StableRNG(1234)
     C1 = 2.
     C2 = 5.
-
-    sampler = EuclideanHMC(1.5, 3.0)
 
     initial_q = randn(rng, 2)
 
@@ -20,4 +18,5 @@ using Mici.Mici: EuclideanHMC
         @test norm(mean(q, dims=2) - ℓ.μ) < C1 / sqrt(n_samples)
         @test norm(cov(q, dims=2) - ℓ.Σ) < C2 / sqrt(n_samples)
     end
+
 end

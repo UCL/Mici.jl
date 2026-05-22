@@ -45,8 +45,22 @@ function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real
     EuclideanHMC{LeapfrogIntegrator}(integration_time_lower, integration_time_upper)
 end
 
+const NUTS{S,I,TI<:AbstractNUTSTransition,TM} = HMC{S,I,TI,TM}
+
+function EuclideanNUTS(max_depth::Int)
+    HMC{EuclideanSystem,LeapfrogIntegrator}(NUTSTransition(max_depth, 1000.0))
+end
+
 function state_type(
     ::HMC{S,I,TI,TM}
 ) where {S,I,TI<:AbstractMetropolisIntegrationTransition,TM}
+    MetropolisHMCState
+end
+
+function state_type(
+    ::HMC{S,I,TI,TM}
+) where {S,I,TI<:AbstractNUTSTransition,TM}
+    # TODO: Define a separate state type for NUTS or even a more general
+    # state type with metaprogramming to include fields specific to different transition types.
     MetropolisHMCState
 end
