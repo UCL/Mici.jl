@@ -16,7 +16,7 @@ include("integrator.jl")
 export LeapfrogIntegrator
 
 include("gni.jl")
-export IntegratorAdapterCore
+export IntegratorAdapterCore, GNISplittingIntegrator, LeapfrogAdapter
 
 include("transition.jl")
 export IndependentMomentumTransition, CorrelatedMomentumTransition, RandomMetropolisIntegrationTransition, StaticMetropolisIntegrationTransition

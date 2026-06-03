@@ -1,110 +1,149 @@
 using GeometricIntegrators
-using ..Mici: AbstractSystem, ChainState, h1_flow, h2_flow, ∂H₁∂q, ∂H₂∂p
 
-#=
-This is a module offering a thin wrapper to GeometricIntegrators.jl
-https://github.com/JuliaGNI/GeometricIntegrators.jl
+"""
+    GNISplittingIntegrator
 
-The purpose of this adaptor is to translate between the MCMC semantics
-that are defined as part of the transitions and sampling steps.
+Adapter which runs Mici's separable Hamiltonian flows through
+GeometricIntegrators.jl's SODE splitting machinery.
 
-The interface should do the following
-=#
+The adapter owns the combined `(q, p)` buffer and GNI objects. A `PhasePoint`
+is copied into the buffer before each step and copied back afterwards, keeping
+Mici's accepted/proposed state and cache invalidation semantics unchanged.
+"""
+struct GNISplittingIntegrator{T,B,P,M,S,I} <: AbstractIntegrator
+    ϵ::T
+    buffer::B
+    problem::P
+    method::M
+    solstep::S
+    integrator::I
+end
 
-
-
-# TODO add some traits or capabilities to decorate this type
-struct SeparableSystem <: AbstractSystem end
-
-struct V1Field{S}
+struct GNIPotentialVectorField{S,P}
     system::S
-    d::Int
+    scratch::P
 end
 
-function (f::V1Field)(v,t,q,params)
-    # integer divison to get a int
-    d = f.d
-    p = @view q[d+1:end]
-    v[begin:d] .= 0
-    v[d+1:end] .= ∂H₂∂p(f.system, p)
-    return nothing
-end
-
-struct V2Field{S}
+struct GNIKineticVectorField{S,P}
     system::S
-    d::Int
+    scratch::P
 end
 
-function (f::V2Field)(v, t, x, params)
-    d = f.d
-    q = @view x[begin:d]
-
-    v[begin:d] .= ∂H₁∂q(f.system, q)
-    v[d+1:end] .= 0
-    return nothing
-end
-
-function field_generator(system, initial_state)
-    d = length(initial_state) ÷ 2
-    return (V1Field(system, d), V2Field(system, d))
-end
-
-struct Q1Flow{S}
+struct GNIPotentialFlow{S,P}
     system::S
-    d::Int
+    scratch::P
 end
 
-function (f::Q1Flow)(q1, t1, q0, t0, params)
-    d = f.d
-    q1 .= q0
-    state = ChainState(@view(q1[begin:d]), @view(q1[d+1:end]))
-    h1_flow(f.system, state, t1 - t0)
-    return nothing
-end
-
-struct Q2Flow{S}
+struct GNIKineticFlow{S,P}
     system::S
-    d::Int
+    scratch::P
 end
 
-function (f::Q2Flow)(q1, t1, q0, t0, params)
-    d = f.d
-    q1 .= q0
-    state = ChainState(@view(q1[begin:d]), @view(q1[d+1:end]))
-    h2_flow(f.system, state, t1 - t0)
-    return nothing
-end
-
-function flow_generator(system, initial_state)
-    d = length(initial_state) ÷ 2
-    return (Q1Flow(system, d), Q2Flow(system, d))
-end
-
-function construct_split_ode_problem(system::AbstractSystem, initial_state::AbstractArray, timespan::Tuple, step_size::Real)
-    @assert step_size > 0 "step_size must be greater than 0"
-
-    vector_fields = field_generator(system, initial_state)
-    subflows = flow_generator(system, initial_state)
-    problem = SODEProblem(vector_fields, subflows, timespan, step_size, initial_state)
-    return problem
-end
-
-
-# TODO This naming is pretty poor, need to get better understanding
-# of the domain and its mapping to our MCMC space
-struct SeparableODE{C<:IntegratorAdapterCore} <: AbstractIntegrator
-    core::C
-
-    function SeparableODE(system::AbstractSystem, initial_state::AbstractArray, timespan::Tuple, step_size::Real, method::GeometricMethod)
-        problem = construct_split_ode_problem(system, initial_state, timespan, step_size)
-        integrator = GeometricIntegrator(problem, method)
-        solution = SolutionStep(problem)
-        core = IntegratorAdapterCore(problem, method, solution, integrator)
-        return new{typeof(core)}(core)
+function _phasepoint_to_buffer!(buffer::AbstractVector, z::PhasePoint)
+    d = dimension(z)
+    @views begin
+        buffer[1:d] .= z.q
+        buffer[(d + 1):(2d)] .= z.p
     end
-
-    SeparableODE(system, initial_state, timespan, step_size; method::GeometricMethod=StrangA()) =  SeparableODE(system, initial_state, timespan, step_size, method)
+    return buffer
 end
 
+function _buffer_to_phasepoint!(z::PhasePoint, buffer::AbstractVector)
+    d = dimension(z)
+    @views begin
+        z.q .= buffer[1:d]
+        z.p .= buffer[(d + 1):(2d)]
+    end
+    refresh!(z)
+    return z
+end
 
-LeapfrogAdapter(args...; kwargs...) = SeparableODE(args...; method=StrangA(), kwargs...)
+function _buffer_to_scratch!(scratch::PhasePoint, buffer::AbstractVector)
+    _buffer_to_phasepoint!(scratch, buffer)
+    return scratch
+end
+
+function _scratch_to_buffer!(buffer::AbstractVector, scratch::PhasePoint)
+    _phasepoint_to_buffer!(buffer, scratch)
+    return buffer
+end
+
+function (field::GNIPotentialVectorField)(v, t, x, params)
+    scratch = _buffer_to_scratch!(field.scratch, x)
+    d = dimension(scratch)
+    @views begin
+        v[1:d] .= 0
+        v[(d + 1):(2d)] .= .-∂h₁∂q(scratch, field.system)
+    end
+    return nothing
+end
+
+function (field::GNIKineticVectorField)(v, t, x, params)
+    scratch = _buffer_to_scratch!(field.scratch, x)
+    d = dimension(scratch)
+    @views begin
+        v[1:d] .= ∂h₂∂p(scratch, field.system)
+        v[(d + 1):(2d)] .= 0
+    end
+    return nothing
+end
+
+function (flow::GNIPotentialFlow)(x₁, t₁, x₀, t₀, params)
+    scratch = _buffer_to_scratch!(flow.scratch, x₀)
+    Φ₁!(scratch, flow.system, t₁ - t₀)
+    _scratch_to_buffer!(x₁, scratch)
+    return nothing
+end
+
+function (flow::GNIKineticFlow)(x₁, t₁, x₀, t₀, params)
+    scratch = _buffer_to_scratch!(flow.scratch, x₀)
+    Φ₂!(scratch, flow.system, t₁ - t₀)
+    _scratch_to_buffer!(x₁, scratch)
+    return nothing
+end
+
+function _gni_scratch(z::PhasePoint{T}) where {T}
+    PhasePoint(undef, dimension(z), T)
+end
+
+function GNISplittingIntegrator(;
+    system::AbstractTractableFlowSystem,
+    phase_point::PhasePoint,
+    step_size=0.1,
+    method=StrangA(),
+    kwargs...,
+)
+    ϵ = isnothing(step_size) ? 0.1 : step_size
+    buffer = Vector{eltype(phase_point.q)}(undef, 2 * dimension(phase_point))
+    _phasepoint_to_buffer!(buffer, phase_point)
+
+    vector_fields = (
+        GNIPotentialVectorField(system, _gni_scratch(phase_point)),
+        GNIKineticVectorField(system, _gni_scratch(phase_point)),
+    )
+    flows = (
+        GNIPotentialFlow(system, _gni_scratch(phase_point)),
+        GNIKineticFlow(system, _gni_scratch(phase_point)),
+    )
+    problem = SODEProblem(vector_fields, flows, (zero(ϵ), ϵ), ϵ, buffer)
+    integrator = GeometricIntegrator(problem, method)
+    solstep = SolutionStep(problem)
+    return GNISplittingIntegrator(ϵ, buffer, problem, method, solstep, integrator)
+end
+
+step_size(integrator::GNISplittingIntegrator) = integrator.ϵ
+
+function step!(
+    z::PhasePoint,
+    integrator::GNISplittingIntegrator,
+    system::AbstractTractableFlowSystem,
+)
+    _phasepoint_to_buffer!(integrator.buffer, z)
+    copy!(integrator.solstep, (t=zero(integrator.ϵ), q=integrator.buffer))
+    GeometricIntegrators.integrate!(integrator.solstep, integrator.integrator)
+    integrator.buffer .= integrator.solstep.q
+    _buffer_to_phasepoint!(z, integrator.buffer)
+    return nothing
+end
+
+const LeapfrogAdapter = GNISplittingIntegrator

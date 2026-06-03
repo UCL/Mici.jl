@@ -9,17 +9,13 @@ function AbstractMCMC.step(
     initial_metric=nothing,
     kwargs...,
 ) where {S<:AbstractSystem,I<:AbstractIntegrator}
-    println("Starting AbstractMCMC stuff")
     ℓπ = model.logdensity
     dimension = LogDensityProblems.dimension(ℓπ)
     metric = isnothing(initial_metric) ? ScalMat(dimension, 1.0) : initial_metric
     system = S(metric, ℓπ)
     phase_point = sample_initial_phase_point(rng, system, initial_q)
-    println("Attemting to construct integrator")
     integrator = I(; system=system, phase_point=phase_point, step_size=initial_ϵ)
-    println("SUCCESSFULLY Constructed Integrator")
     state = state_type(sampler)(phase_point, system, integrator)
-    println("SUCCESSFULLY Constructed state")
 
     return AbstractMCMC.step(rng, model, sampler, state; kwargs...)
 end
@@ -32,7 +28,6 @@ function AbstractMCMC.step(
     trace_function=default_trace_function,
     kwargs...,
 )
-    println("Inside non-initializing step")
     transition!(state, rng, sampler.momentum_transition)
     transition_stats = transition!(state, rng, sampler.integration_transition)
     return (; traces=trace_function(state), statistics=transition_stats), state
@@ -79,4 +74,3 @@ function AbstractMCMC.save!!(
     end
     return samples
 end
-
