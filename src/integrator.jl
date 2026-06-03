@@ -16,10 +16,6 @@ function LeapfrogIntegrator(; step_size=0.1, kwargs...)
 end
 
 step_size(integrator::LeapfrogIntegrator) = integrator.ϵ
-# struct LeapfrogGNIIntegrator{T} <: AbstractIntegrator
-#     ϵ::T
-#     adapter::Gni.LeapfrogAdapter
-# end
 
 function step!(z::PhasePoint, integrator::LeapfrogIntegrator, system::AbstractTractableFlowSystem)
     Φ₁!(z, system, integrator.ϵ / 2)
