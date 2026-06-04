@@ -19,6 +19,26 @@ struct GNISplittingIntegrator{T,B,P,M,S,I} <: AbstractIntegrator
     integrator::I
 end
 
+"""
+    GNICompositionIntegrator
+
+Adapter which runs Mici's separable Hamiltonian flows through
+GeometricIntegrators.jl's composition machinery.
+
+The outer composition integrator uses `NoCache`, while each exact substep still
+uses the package's exact-solution machinery. This keeps the same phase-point
+semantics as the splitting adapter but changes the orchestration path used by
+GeometricIntegrators.
+"""
+struct GNICompositionIntegrator{T,B,P,M,S,I} <: AbstractIntegrator
+    ϵ::T
+    buffer::B
+    problem::P
+    method::M
+    solstep::S
+    integrator::I
+end
+
 struct GNIPotentialVectorField{S,P}
     system::S
     scratch::P
@@ -106,14 +126,11 @@ function _gni_scratch(z::PhasePoint{T}) where {T}
     PhasePoint(undef, dimension(z), T)
 end
 
-function GNISplittingIntegrator(;
+function _gni_problem(
     system::AbstractTractableFlowSystem,
     phase_point::PhasePoint,
-    step_size=0.1,
-    method=StrangA(),
-    kwargs...,
+    ϵ,
 )
-    ϵ = isnothing(step_size) ? 0.1 : step_size
     buffer = Vector{eltype(phase_point.q)}(undef, 2 * dimension(phase_point))
     _phasepoint_to_buffer!(buffer, phase_point)
 
@@ -126,12 +143,39 @@ function GNISplittingIntegrator(;
         GNIKineticFlow(system, _gni_scratch(phase_point)),
     )
     problem = SODEProblem(vector_fields, flows, (zero(ϵ), ϵ), ϵ, buffer)
+    return buffer, problem
+end
+
+function GNISplittingIntegrator(;
+    system::AbstractTractableFlowSystem,
+    phase_point::PhasePoint,
+    step_size=0.1,
+    method=StrangA(),
+    kwargs...,
+)
+    ϵ = isnothing(step_size) ? 0.1 : step_size
+    buffer, problem = _gni_problem(system, phase_point, ϵ)
     integrator = GeometricIntegrator(problem, method)
     solstep = SolutionStep(problem)
     return GNISplittingIntegrator(ϵ, buffer, problem, method, solstep, integrator)
 end
 
+function GNICompositionIntegrator(;
+    system::AbstractTractableFlowSystem,
+    phase_point::PhasePoint,
+    step_size=0.1,
+    method=StrangA(),
+    kwargs...,
+)
+    ϵ = isnothing(step_size) ? 0.1 : step_size
+    buffer, problem = _gni_problem(system, phase_point, ϵ)
+    integrator = GeometricIntegrator(problem, Composition(method))
+    solstep = SolutionStep(problem)
+    return GNICompositionIntegrator(ϵ, buffer, problem, method, solstep, integrator)
+end
+
 step_size(integrator::GNISplittingIntegrator) = integrator.ϵ
+step_size(integrator::GNICompositionIntegrator) = integrator.ϵ
 
 function step!(
     z::PhasePoint,
@@ -146,4 +190,18 @@ function step!(
     return nothing
 end
 
+function step!(
+    z::PhasePoint,
+    integrator::GNICompositionIntegrator,
+    system::AbstractTractableFlowSystem,
+)
+    _phasepoint_to_buffer!(integrator.buffer, z)
+    copy!(integrator.solstep, (t=zero(integrator.ϵ), q=integrator.buffer))
+    GeometricIntegrators.integrate!(integrator.solstep, integrator.integrator)
+    integrator.buffer .= integrator.solstep.q
+    _buffer_to_phasepoint!(z, integrator.buffer)
+    return nothing
+end
+
 const LeapfrogAdapter = GNISplittingIntegrator
+const CompositionAdapter = GNICompositionIntegrator
