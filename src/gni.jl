@@ -1,4 +1,12 @@
-using GeometricIntegrators
+import GeometricIntegrators
+import GeometricIntegrators: Composition, GeometricIntegrator, SODEProblem, SolutionStep
+
+_gni_method(::StrangA) = GeometricIntegrators.StrangA()
+_gni_method(::StrangB) = GeometricIntegrators.StrangB()
+_gni_method(::McLachlan2) = GeometricIntegrators.McLachlan2()
+_gni_method(::McLachlan4) = GeometricIntegrators.McLachlan4()
+_gni_method(::TripleJump) = GeometricIntegrators.TripleJump()
+_gni_method(::SuzukiFractal) = GeometricIntegrators.SuzukiFractal()
 
 """
     GNISplittingIntegrator
@@ -155,7 +163,7 @@ function GNISplittingIntegrator(;
 )
     ϵ = isnothing(step_size) ? 0.1 : step_size
     buffer, problem = _gni_problem(system, phase_point, ϵ)
-    integrator = GeometricIntegrator(problem, method)
+    integrator = GeometricIntegrator(problem, _gni_method(method))
     solstep = SolutionStep(problem)
     return GNISplittingIntegrator(ϵ, buffer, problem, method, solstep, integrator)
 end
@@ -169,7 +177,7 @@ function GNICompositionIntegrator(;
 )
     ϵ = isnothing(step_size) ? 0.1 : step_size
     buffer, problem = _gni_problem(system, phase_point, ϵ)
-    integrator = GeometricIntegrator(problem, Composition(method))
+    integrator = GeometricIntegrator(problem, Composition(_gni_method(method)))
     solstep = SolutionStep(problem)
     return GNICompositionIntegrator(ϵ, buffer, problem, method, solstep, integrator)
 end
