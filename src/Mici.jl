@@ -19,7 +19,6 @@ include("composition_integrator.jl")
 export CompositionIntegrator, AbstractCompositionMethod, StrangA, StrangB, McLachlan2, McLachlan4, TripleJump, SuzukiFractal
 
 include("gni.jl")
-export IntegratorAdapterCore, GNISplittingIntegrator, GNICompositionIntegrator, CompositionAdapter, LeapfrogAdapter
 
 include("transition.jl")
 export IndependentMomentumTransition, CorrelatedMomentumTransition, RandomMetropolisIntegrationTransition, StaticMetropolisIntegrationTransition
