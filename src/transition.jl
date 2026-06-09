@@ -64,7 +64,7 @@ Perform a Metropolis-adjusted integration transition
 function metropolis_integration_transition!(
     state::MetropolisHMCState, rng::AbstractRNG, integration_time::Real
 )
-    n_step = Int(integration_time ÷ state.integrator.ϵ)
+    n_step = Int(integration_time ÷ step_size(state.integrator))
     copy!(state.proposed_phase_point, state.phase_point)
     for s in 1:n_step
         step!(state.proposed_phase_point, state.integrator, state.system)
@@ -114,4 +114,3 @@ function transition!(
     state.phase_point.p .+= tmp * sqrt(1 - transition.correlation_coefficient^2)
     return nothing
 end
-

@@ -14,8 +14,9 @@ function AbstractMCMC.step(
     metric = isnothing(initial_metric) ? ScalMat(dimension, 1.0) : initial_metric
     system = S(metric, ℓπ)
     phase_point = sample_initial_phase_point(rng, system, initial_q)
-    integrator = I(initial_ϵ)
+    integrator = I(; system=system, phase_point=phase_point, step_size=initial_ϵ)
     state = state_type(sampler)(phase_point, system, integrator)
+
     return AbstractMCMC.step(rng, model, sampler, state; kwargs...)
 end
 
@@ -73,4 +74,3 @@ function AbstractMCMC.save!!(
     end
     return samples
 end
-

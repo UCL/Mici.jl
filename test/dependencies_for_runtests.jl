@@ -1,8 +1,8 @@
 using AbstractMCMC: sample, LogDensityModel
+import Random
 using LinearAlgebra
 using LogDensityProblems
 using PDMats
-using StableRNGs
 using Statistics
 using Test
 

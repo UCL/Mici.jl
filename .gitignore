@@ -1,9 +1,11 @@
 *.jl.*.cov
 *.jl.cov
-*.jl.mem
+*.mem
 /Manifest*.toml
+/benchmark/Manifest*.toml
 /docs/Manifest*.toml
 /test/Manifest*.toml
 /examples/Manifest*.toml
 /docs/build/
 *.vscode/*
+torus_samples.csv
