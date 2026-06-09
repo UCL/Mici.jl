@@ -23,6 +23,11 @@ Abstract supertype for Metropolis-adjusted integration transitions in MCMC sampl
 abstract type AbstractMetropolisIntegrationTransition{T} <: AbstractIntegrationTransition end
 
 """
+    AbstractNUTSTransition{T} <: AbstractIntegrationTransition
+"""
+abstract type AbstractNUTSTransition <: AbstractIntegrationTransition end
+
+"""
     AbstractMomentumTransition <: AbstractTransition
 
 Abstract supertype for momentum transitions in MCMC samplers. 
@@ -115,3 +120,154 @@ function transition!(
     return nothing
 end
 
+function no_u_turn(system::AbstractSystem, left_phase_point::PhasePoint, right_phase_point::PhasePoint, sum_momentum::Vector)
+    ∂h∂p(left_phase_point, system)' * sum_momentum < 0 || ∂h∂p(right_phase_point, system)' * sum_momentum < 0
+end
+struct SubTree{C, T, W}
+    left::C
+    right::C
+    momentum::T
+    weight::W
+    depth::Int
+end
+
+struct NUTSTransition{T} <: AbstractNUTSTransition
+    max_depth::Int
+    max_Δh::T
+end
+
+struct NUTSTreeContext{I,S,T}
+    integrator::I
+    system::S
+    initial_h::T
+    max_Δh::T
+end
+
+mutable struct NUTSTreeStats
+    n_steps::Int
+    diverged::Bool
+    reject_prob::Float64
+    sum_accept_prob::Float64
+end
+
+NUTSTreeStats() = NUTSTreeStats(0, false, 1.0, 0.0)
+
+function new_leaf(
+    phase_point::PhasePoint,
+    h,
+)
+    # ToDo numerical stabilisation, logsumexp
+    return SubTree(phase_point, phase_point, phase_point.p, exp(-h), 0)
+end
+
+function merge_subtrees(
+    left::SubTree,
+    right::SubTree,
+)
+    left.depth == right.depth || error("Cannot merge subtrees of different depths.")
+
+    return SubTree(
+        left.left,
+        right.right,
+        left.momentum + right.momentum,
+        left.weight + right.weight,
+        left.depth + 1,
+    )
+end
+
+function build_tree(rng::AbstractRNG, depth::Int, direction::Int, phase_point::PhasePoint, context::NUTSTreeContext, stats::NUTSTreeStats)
+    if depth == 0
+
+        new_phase_point = copy(phase_point)
+        step!(new_phase_point, context.integrator, context.system; direction)
+        h_value = h(new_phase_point, context.system)
+        tree = new_leaf(new_phase_point, h_value)
+
+        Δh = h_value - context.initial_h
+        terminate = !isfinite(Δh) || Δh > context.max_Δh
+        stats.diverged = terminate
+        stats.n_steps += 1
+        accept_prob = isfinite(Δh) ? exp(min(-Δh, 0.0)) : 0.0
+        stats.sum_accept_prob += accept_prob
+
+        return terminate, tree, new_phase_point
+    end
+
+    terminate, inner_tree, inner_proposal = build_tree(rng, depth - 1, direction, phase_point, context, stats)
+    if terminate
+        return true, nothing, nothing
+    end
+
+    phase_point = direction == 1 ? inner_tree.right : inner_tree.left
+
+    terminate, outer_tree, outer_proposal = build_tree(rng, depth - 1, direction, phase_point, context, stats)
+    if terminate
+        return true, nothing, nothing
+    end
+
+    left_subtree, right_subtree = if direction == 1
+        inner_tree, outer_tree
+    else
+        outer_tree, inner_tree
+    end
+    tree = merge_subtrees(left_subtree, right_subtree)
+
+    accept_outer_prob = min(outer_tree.weight / tree.weight, 1.0)
+    proposal = rand(rng) < accept_outer_prob ? outer_proposal : inner_proposal
+
+    terminate = no_u_turn(context.system, tree.left, tree.right, tree.momentum)
+
+    return terminate, tree, proposal
+end
+
+function transition!(state::AbstractState, rng::AbstractRNG, transition::NUTSTransition)
+
+    initial_h = h(state.phase_point, state.system)
+    tree = new_leaf(copy(state.phase_point), initial_h)
+    next_phase_point = copy(state.phase_point)
+    context = NUTSTreeContext(state.integrator, state.system, initial_h, transition.max_Δh)
+    stats = NUTSTreeStats()
+    final_depth = 0
+
+    for depth in 0:(transition.max_depth - 1)
+        final_depth = depth
+
+        direction = rand(rng, Bool) ? 1 : -1
+        if direction == 1
+            copy!(next_phase_point, tree.right)
+        else
+            copy!(next_phase_point, tree.left)
+        end
+
+        terminate, new_tree, proposal = build_tree(rng, depth, direction, next_phase_point, context, stats)
+
+        if terminate
+            break
+        end
+
+        # bias proposals towards new subtrees to encourage exploration of the state space
+        accept_prob = min(new_tree.weight / tree.weight, 1.0)
+        if rand(rng) < accept_prob
+            copy!(state.phase_point, proposal)
+        end
+        stats.reject_prob *= 1.0 - accept_prob
+
+        left_subtree = direction == 1 ? tree : new_tree
+        right_subtree = direction == 1 ? new_tree : tree
+        tree = merge_subtrees(left_subtree, right_subtree)
+
+        if no_u_turn(context.system, tree.left, tree.right, tree.momentum)
+            break
+        end
+    end
+
+    accept_probability = stats.n_steps == 0 ? 0.0 : stats.sum_accept_prob / stats.n_steps
+
+    return (;
+        n_steps = stats.n_steps,
+        diverged = stats.diverged,
+        accept_probability = accept_probability,
+        reject_prob = stats.reject_prob,
+        tree_depth = final_depth,
+    )
+end

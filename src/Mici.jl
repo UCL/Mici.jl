@@ -19,7 +19,7 @@ include("transition.jl")
 export IndependentMomentumTransition, CorrelatedMomentumTransition, RandomMetropolisIntegrationTransition, StaticMetropolisIntegrationTransition
 
 include("sample.jl")
-export HMC, EuclideanHMC
+export HMC, EuclideanHMC, EuclideanNUTS
 
 include("abstractmcmc.jl")
 
