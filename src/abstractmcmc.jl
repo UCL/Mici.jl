@@ -15,10 +15,9 @@ function AbstractMCMC.step(
     dimension = LogDensityProblems.dimension(ℓπ)
     metric = isnothing(initial_metric) ? ScalMat(dimension, 1.0) : initial_metric
     system = S(metric, ℓπ)
-    system = EuclideanSystem(metri)
     phase_point = sample_initial_phase_point(rng, system, initial_q)
     integrator = I(initial_ϵ)
-    adapter = A()
+    adapter = A(nothing)
     state = state_type(sampler)(phase_point, system, integrator, adapter)
     return AbstractMCMC.step(rng, model, sampler, state; kwargs...)
 end
@@ -33,7 +32,7 @@ function AbstractMCMC.step(
 )
     transition!(state, rng, sampler.momentum_transition)
     transition_stats = transition!(state, rng, sampler.integration_transition)
-    update_adapter_state!(, transition_stats)
+    update_adapter!(state.adapter, transition_stats)
     return (; traces=trace_function(state), statistics=transition_stats), state
 end
 

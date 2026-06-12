@@ -36,18 +36,18 @@ function HMC{S,I,A}(integration_time_lower::Real, integration_time_upper::Real) 
     )
 end
 
-const EuclideanHMC{I,TI,TM} = HMC{EuclideanSystem,I,DualAveraging,TI,TM}
+const EuclideanHMC{I,A,TI,TM} = HMC{EuclideanSystem,I,A,TI,TM}
 
 function EuclideanHMC(integration_time::Real)
-    EuclideanHMC{LeapfrogIntegrator}(StaticMetropolisIntegrationTransition(integration_time))
+    EuclideanHMC{LeapfrogIntegrator, DualAveragingAdapter}(StaticMetropolisIntegrationTransition(integration_time))
 end
 
 function EuclideanHMC(integration_time_lower::Real, integration_time_upper::Real)
-    EuclideanHMC{LeapfrogIntegrator}(integration_time_lower, integration_time_upper)
+    EuclideanHMC{LeapfrogIntegrator, DualAveragingAdapter}(integration_time_lower, integration_time_upper)
 end
 
 function state_type(
-    ::HMC{S,I,TI,TM}
+    ::HMC{S,I,A,TI,TM}
 ) where {S,I,TI<:AbstractMetropolisIntegrationTransition,TM}
     MetropolisHMCState
 end
