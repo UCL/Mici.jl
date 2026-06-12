@@ -1,9 +1,11 @@
 # Methods for AbstractMCMC integration with Mici sampling algorithms
 
+euclidean = MICISample{EuclideanSystem, LeapfrogIntegrator, NoAdaptation}
+
 function AbstractMCMC.step(
     rng::AbstractRNG,
     model::AbstractMCMC.LogDensityModel,
-    sampler::AbstractMiciSampler{S,I};
+    sampler::AbstractMiciSampler{S,I,A};
     initial_q=nothing,
     initial_ϵ=nothing,
     initial_metric=nothing,
@@ -13,9 +15,11 @@ function AbstractMCMC.step(
     dimension = LogDensityProblems.dimension(ℓπ)
     metric = isnothing(initial_metric) ? ScalMat(dimension, 1.0) : initial_metric
     system = S(metric, ℓπ)
+    system = EuclideanSystem(metri)
     phase_point = sample_initial_phase_point(rng, system, initial_q)
     integrator = I(initial_ϵ)
-    state = state_type(sampler)(phase_point, system, integrator)
+    adapter = A()
+    state = state_type(sampler)(phase_point, system, integrator, adapter)
     return AbstractMCMC.step(rng, model, sampler, state; kwargs...)
 end
 
@@ -29,6 +33,7 @@ function AbstractMCMC.step(
 )
     transition!(state, rng, sampler.momentum_transition)
     transition_stats = transition!(state, rng, sampler.integration_transition)
+    update_adapter_state!(, transition_stats)
     return (; traces=trace_function(state), statistics=transition_stats), state
 end
 
